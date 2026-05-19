@@ -222,6 +222,30 @@
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Rafał Rawecki", 
                 telBhp: "+48000000000"              
+            },
+            {
+                typ: "SE",           
+                status: "aktywne",   
+                nazwa: "SE Polkowice",
+                etykieta: "Polkowice",
+                lat: 51.496195,      
+                lng: 16.073803,      
+                kierownikNazwa: "Łukasz Turchan", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Arkadiusz Wieczorek", 
+                telBhp: "+48000000000"              
+            },
+            {
+                typ: "LN",           
+                status: "aktywne",   
+                nazwa: "Linia 110 kV Radzyń - Łuków",
+                etykieta: "Radzyń",
+                lat: 51.777073,      
+                lng: 22.622897,      
+                kierownikNazwa: "Patryk Trojanowski", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Brak osoby", 
+                telBhp: ""              
             }
         ];
 
@@ -263,7 +287,7 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Stały, pomniejszony dymek tekstowy z typem i dedykowaną nazwą (np. LN: CPK, SE: Leszno)
+            // Stały, pomniejszony dymek tekstowy z typem i dedykowaną nazwą
             marker.bindTooltip(`${projekt.typ}: ${projekt.etykieta}`, {
                 permanent: true, 
                 direction: 'top',
