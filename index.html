@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Projekty ENPROM - Mobile Map</title>
+    <title>Projekty ENPROM - Nawigacja</title>
     <style>
-        /* Reset i optymalizacja wydajnościowa */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: #1a1a1a;
         }
 
@@ -22,16 +21,14 @@
             height: 100vh;
         }
 
-        /* Przyspieszone ładowanie i renderowanie mapy */
         .map-container iframe {
             width: 100%;
             height: 100%;
             border: 0;
             display: block;
-            contain: strict; /* Optymalizacja renderowania w telefonie */
         }
 
-        /* ROZWIJANE MENU U GÓRY */
+        /* PANEL GÓRNY - ROZWIJALNY */
         .top-menu-container {
             position: absolute;
             top: 0;
@@ -42,7 +39,7 @@
         }
 
         .menu-header {
-            background-color: #e41f1f; /* Czerwień firmowa ENPROM */
+            background-color: #e41f1f;
             color: white;
             padding: 12px 16px;
             font-weight: bold;
@@ -59,7 +56,6 @@
             transition: transform 0.3s ease;
         }
 
-        /* Stan po rozwinięciu menu - obrót strzałki */
         .top-menu-container.open .menu-header::after {
             transform: rotate(180deg);
         }
@@ -72,13 +68,12 @@
         }
 
         .top-menu-container.open .menu-content {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
-        /* Elementy na liście projektów */
         .project-item {
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-bottom: 1px solid #eee;
             font-size: 13px;
         }
@@ -86,72 +81,51 @@
         .project-title {
             font-weight: bold;
             color: #111;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
-        .project-contact {
+        /* Grupa przycisków akcji dla każdego projektu */
+        .action-group {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 6px;
+            gap: 10px;
+            margin-top: 8px;
         }
 
-        .inline-call-link {
-            color: #007bff;
+        .action-link {
+            flex: 1;
+            text-align: center;
             text-decoration: none;
             font-weight: bold;
-            background: #e6f0fa;
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 4px;
+            font-size: 12px;
         }
 
-        /* POMNIEJSZONE PŁYWAJĄCE PRZYCISKI (Prawa strona) */
-        .floating-buttons {
+        .link-call {
+            color: #28a745;
+            background: #eaf7ed;
+            border: 1px solid #28a745;
+        }
+
+        .link-nav {
+            color: #ffffff;
+            background: #007bff;
+            border: 1px solid #007bff;
+        }
+
+        /* Podpowiedź tekstowa na dole ekranu */
+        .info-bar {
             position: absolute;
-            top: 60px; /* Umieszczone bezpiecznie pod paskiem menu */
-            right: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            z-index: 9999;
-        }
-
-        .phone-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 12px; /* Zmniejszony padding zgodnie z prośbą */
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 12px; /* Mniejszy font */
-            border-radius: 18px; /* Subtelniejsze zaokrąglenie */
-            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-            transition: transform 0.1s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .phone-btn:active {
-            transform: scale(0.95);
-        }
-
-        .kierownik { background-color: #007bff; }
-        .bhp { background-color: #28a745; }
-
-        /* DOLNY DIALOG ZE SKRÓTAMI WIZUALNYMI */
-        .map-legend {
-            position: absolute;
-            bottom: 24px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
+            padding: 6px 14px;
+            border-radius: 20px;
             font-size: 11px;
-            pointer-events: none; /* Nie przeszkadza w klikaniu mapy pod spodem */
             z-index: 999;
+            pointer-events: none;
             white-space: nowrap;
         }
     </style>
@@ -162,53 +136,46 @@
         
         <div class="top-menu-container" id="topMenu">
             <div class="menu-header" onclick="toggleMenu()">
-                📂 PROJEKTY ENPROM (Lista i Kontakty)
+                📂 LISTA PROJEKTÓW (Zadzwoń / Nawiguj)
             </div>
             <div class="menu-content">
+                
                 <div class="project-item">
                     <div class="project-title">LK Bolesławiec - Świętoszów (110 KV)</div>
-                    <div class="project-contact">
-                        <span>Kierownik: Filip Correia</span>
-                        <a href="tel:533350594" class="inline-call-link">📞 Zadzwoń</a>
+                    <div><b>Kierownik:</b> Filip Correia</div>
+                    <div class="action-group">
+                        <a href="tel:533350594" class="action-link link-call">📞 Zadzwoń</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=51.287194,15.594056" target="_blank" class="action-link link-nav">🚗 Nawiguj w Google Maps</a>
                     </div>
                 </div>
+
                 <div class="project-item">
                     <div class="project-title">SE Rokitnica</div>
-                    <div class="project-contact">
-                        <span>Kierownik: [Imię Nazwisko]</span>
-                        <a href="tel:+48000000000" class="inline-call-link">📞 Zadzwoń</a>
+                    <div><b>Kierownik:</b> [Imię Nazwisko]</div>
+                    <div class="action-group">
+                        <a href="tel:+48000000000" class="action-link link-call">📞 Zadzwoń</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=50.3664515,18.7917144" target="_blank" class="action-link link-nav">🚗 Nawiguj w Google Maps</a>
                     </div>
                 </div>
+
             </div>
         </div>
-        
-        <div class="floating-buttons">
-            <a href="tel:533350594" class="phone-btn kierownik">
-                📞 Kierownik
-            </a>
-            <a href="tel:+48000000000" class="phone-btn bhp">
-                ⛑️ BHP
-            </a>
-        </div>
 
-        <div class="map-legend">
-            📍 Bolesławiec [LK] | 📍 Gliwice / Katowice [SE]
+        <div class="info-bar">
+            Rozwiń panel u góry, aby wybrać projekt i włączyć nawigację
         </div>
 
         <iframe 
-            src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxIeFYqiakHP8wHw&ehbc=2E312F" 
+            src="https://maps.google.com/?cid=10231068451434428578&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQ" 
             allowfullscreen="" 
-            loading="eager" 
-            importance="high"
-            style="border:0;">
+            loading="lazy">
         </iframe>
 
     </div>
 
     <script>
         function toggleMenu() {
-            const menu = document.getElementById('topMenu');
-            menu.classList.toggle('open');
+            document.getElementById('topMenu').classList.toggle('open');
         }
     </script>
 
