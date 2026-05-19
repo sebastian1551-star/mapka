@@ -36,16 +36,17 @@
 
         .popup-container {
             text-align: center;
-            min-width: 200px;
+            min-width: 220px;
         }
 
         .popup-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             color: #222;
             margin-bottom: 8px;
             border-bottom: 1px solid #eee;
             padding-bottom: 6px;
+            line-height: 1.3;
         }
 
         /* Styl przycisków akcji w dymku */
@@ -72,7 +73,7 @@
         /* Kolory przycisków */
         .kierownik { background-color: #007bff; }
         .bhp { background-color: #28a745; }
-        .nawiguj { background-color: #ffc107; color: #000 !important; } /* Żółty z czarnym tekstem dla widoczności */
+        .nawiguj { background-color: #ffc107; color: #000 !important; }
     </style>
 </head>
 <body>
@@ -80,48 +81,52 @@
     <div id="map"></div>
 
     <script>
-        // 1. Inicjalizacja mapy (środek ustawiony na centralną Polskę, zoom 7)
-        const map = L.map('map').setView([52.0, 19.0], 7);
+        // 1. Inicjalizacja mapy (środek ustawiony na południową Polskę, bliżej projektów)
+        const map = L.map('map').setView([50.8, 17.2], 8);
 
         // 2. Ładowanie darmowych kafelków OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // 3. Baza danych projektów (współrzędne, nazwy i telefony)
+        // 3. Baza danych projektów z dokładnymi współrzędnymi i danymi personalnymi
         const projekty = [
             {
                 nazwa: "110 KV Bolesławiec - Świętoszów",
-                lat: 51.267,  // Szerokość geograficzna Bolesławca
-                lng: 15.567,  // Długość geograficzna Bolesławca
+                lat: 51.287194,  
+                lng: 15.594056,  
+                kierownikNazwa: "Filip Correia",
                 telKierownik: "+48533350594", 
+                bhpNazwa: "Jan Kowalski", // Wpisz właściwe imię i nazwisko BHP
                 telBhp: "+48444555666" 
             },
             {
-                nazwa: "Projekt Ząbkowice Śląskie (Rokitnica)",
-                lat: 50.588,  // Przykładowe współrzędne dla Rokitnicy / Ząbkowic
-                lng: 16.811,
+                nazwa: "SE 400/110 kV Rokitnica (Zabrze)",
+                lat: 50.354600,  // Dokładne współrzędne stacji przy ul. Witosa 15, Zabrze
+                lng: 18.761800,
+                kierownikNazwa: "Tomasz Nowak", // Wpisz właściwe imię i nazwisko kierownika
                 telKierownik: "+48777888999",
+                bhpNazwa: "Andrzej Zieliński",  // Wpisz właściwe imię i nazwisko BHP
                 telBhp: "+48000111222"
             }
         ];
 
         // 4. Automatyczne dodawanie pinezek i dymków na mapę
         projekty.forEach(projekt => {
-            // Tworzymy link do nawigacji Google Maps na podstawie współrzędnych geograficznych
+            // Poprawiony link do nawigacji Google Maps na podstawie dokładnych współrzędnych
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${projekt.lat},${projekt.lng}`;
 
-            // Budujemy wygląd dymka (HTML), który pojawi się po kliknięciu w pinezkę
+            // Budujemy wygląd dymka (HTML)
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     
                     <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">
-                        📞 Kierownik: ${projekt.telKierownik}
+                        📞 Kier. ${projekt.kierownikNazwa}: ${projekt.telKierownik}
                     </a>
                     
                     <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
-                        ⛑️ BHP: ${projekt.telBhp}
+                        ⛑️ BHP ${projekt.bhpNazwa}: ${projekt.telBhp}
                     </a>
                     
                     <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">
