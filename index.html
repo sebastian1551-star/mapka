@@ -3,149 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Projekty ENPROM - Interaktywna Mapa</title>
+    <title>Projekty ENPROM - Mapa Mobilna</title>
     <style>
+        /* Pełnoekranowy reset stylów dla telefonów */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a;
         }
 
-        .map-wrapper {
-            position: relative;
+        /* Główny kontener aplikacji */
+        .app-container {
+            display: flex;
+            flex-direction: column;
             width: 100%;
             height: 100vh;
         }
 
-        /* Mapa Google zajmująca pełny ekran */
-        .map-wrapper iframe {
+        /* STREFA MAPY - czysta, oryginalna mapa Google */
+        .map-section {
+            flex: 1; /* Zajmuje całą dostępną przestrzeń w pionie */
+            width: 100%;
+            position: relative;
+        }
+
+        .map-section iframe {
             width: 100%;
             height: 100%;
             border: 0;
             display: block;
         }
 
-        /* STYLIZACJA PRZYCISKÓW / ETYKIET NAD PINEZKAMI */
-        .project-marker-overlay {
-            position: absolute;
-            z-index: 999;
+        /* PANEL SZYBKIEGO KONTAKTU NA DOLE EKRANU */
+        /* To rozwiązanie gwarantuje, że przyciski nie zasłonią pinezek na mapie i są idealnie pod kciukiem */
+        .bottom-contact-panel {
+            background-color: #ffffff;
+            border-top: 2px solid #e41f1f; /* Czerwień firmowa ENPROM */
+            padding: 10px 14px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            z-index: 9999;
+        }
+
+        .panel-title {
             font-size: 11px;
             font-weight: bold;
-        }
-
-        .marker-trigger {
-            background-color: rgba(228, 31, 31, 0.95); /* Czerwień ENPROM */
-            color: white;
-            padding: 6px 10px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            cursor: pointer;
-            white-space: nowrap;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.4);
         }
 
-        /* Rozwijane menu z opcjami */
-        .marker-dropdown {
-            display: none;
-            position: absolute;
-            top: 28px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: white;
+        /* Układ kafelków z projektami */
+        .projects-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 160px;
+            overflow-y: auto; /* W razie dodania kolejnych projektów, panel pozwoli na przewijanie */
+        }
+
+        .project-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-            padding: 6px 0;
-            min-width: 140px;
+            padding: 8px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .project-marker-overlay.active .marker-dropdown {
-            display: block;
+        .project-info {
+            display: flex;
+            flex-direction: column;
         }
 
-        .dropdown-item {
+        .project-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        .project-manager {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Przyciski akcji dzwonienia i nawigacji */
+        .btn-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .action-button {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
             padding: 8px 12px;
-            color: #333;
-            text-decoration: none;
             font-size: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:active { background-color: #f5f5f5; }
-
-        /* Dokładne dopasowanie pozycji przycisków na ekranie smartfona */
-        #marker-boleslawiec {
-            top: 48%;
-            left: 28%;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+            color: white;
+            transition: transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        #marker-rokitnica {
-            top: 73%;
-            left: 78%;
+        .action-button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-call {
+            background-color: #28a745; /* Zielony dla połączeń */
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+
+        .btn-nav {
+            background-color: #007bff; /* Niebieski dla nawigacji */
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
         }
     </style>
 </head>
 <body>
 
-    <div class="map-wrapper">
+    <div class="app-container">
         
-        <div class="project-marker-overlay" id="marker-boleslawiec">
-            <div class="marker-trigger" onclick="toggleMarkerMenu(this)">📍 LK Bolesławiec</div>
-            <div class="marker-dropdown">
-                <a href="tel:533350594" class="dropdown-item">📞 Kierownik</a>
-                <a href="tel:+48000000000" class="dropdown-item">⛑️ Inspektor BHP</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=51.287194,15.594056" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
-            </div>
+        <div class="map-section">
+            <iframe 
+                src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw&ehbc=2E312F" 
+                allowfullscreen="" 
+                loading="eager">
+            </iframe>
         </div>
 
-        <div class="project-marker-overlay" id="marker-rokitnica">
-            <div class="marker-trigger" onclick="toggleMarkerMenu(this)">📍 SE Rokitnica</div>
-            <div class="marker-dropdown">
-                <a href="tel:+48600100200" class="dropdown-item">📞 Kierownik</a>
-                <a href="tel:+48700200300" class="dropdown-item">⛑️ Inspektor BHP</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=50.320,18.650" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
+        <div class="bottom-contact-panel">
+            <div class="panel-title">Szybkie menu budowy (Kliknij aby wybrać akcję)</div>
+            
+            <div class="projects-grid">
+                
+                <div class="project-card">
+                    <div class="project-info">
+                        <span class="project-name">LK Bolesławiec</span>
+                        <span class="project-manager">Kierownik: Filip Correia</span>
+                    </div>
+                    <div class="btn-group">
+                        <a href="tel:533350594" class="action-button btn-call">📞 Zadzwoń</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=51.2658553,15.5657397" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-info">
+                        <span class="project-name">SE Rokitnica</span>
+                        <span class="project-manager">Kierownik: Kontakt główny</span>
+                    </div>
+                    <div class="btn-group">
+                        <a href="tel:+48600100200" class="action-button btn-call">📞 Zadzwoń</a>
+                        <a href="https://www.google.com/maps/search/?api=1&query=50.3664515,18.7917144" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <iframe 
-            src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw" 
-            allowfullscreen="" 
-            loading="eager">
-        </iframe>
 
     </div>
-
-    <script>
-        function toggleMarkerMenu(element) {
-            const parent = element.parentElement;
-            const isActive = parent.classList.contains('active');
-            
-            // Zamykanie innych otwartych menu przed otwarciem obecnego
-            document.querySelectorAll('.project-marker-overlay').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            if (!isActive) {
-                parent.classList.add('active');
-            }
-        }
-
-        // Zamknięcie rozwijanego menu po kliknięciu w dowolne inne miejsce na mapie
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.project-marker-overlay')) {
-                document.querySelectorAll('.project-marker-overlay').forEach(el => {
-                    el.classList.remove('active');
-                });
-            }
-        });
-    </script>
 
 </body>
 </html>
