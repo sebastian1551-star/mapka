@@ -109,8 +109,8 @@
         }
 
         .ukończony-projekt {
-            opacity: 0.4 !important;
-            filter: grayscale(80%);
+            opacity: 0.35 !important;
+            filter: grayscale(90%);
         }
     </style>
 </head>
@@ -145,10 +145,10 @@
             });
         }
 
-        // Centrowanie mapy na obszar Polski
+        // Inicjalizacja mapy bez sztywnego punktu środkowego (będzie dynamicznie dopasowany na końcu)
         const map = L.map('map', {
             zoomSnap: 0.5
-        }).setView([51.4000, 18.5000], 7);
+        });
 
         // Ciemny, czytelny podkład mapy
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -162,7 +162,7 @@
             }
             return L.icon({
                 iconUrl: url,
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                shadowUrl: 'https://cdnjs.github.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                 iconSize: [22, 36],
                 iconAnchor: [11, 36],
                 popupAnchor: [1, -30],
@@ -237,7 +237,7 @@
             },
             {
                 typ: "LN",           
-                status: "aktywne",   
+                status: "nieaktywne",   
                 nazwa: "Linia 110 kV Radzyń - Łuków",
                 etykieta: "Radzyń",
                 lat: 51.777073,      
@@ -246,14 +246,44 @@
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Brak osoby", 
                 telBhp: ""              
+            },
+            {
+                typ: "SE",           
+                status: "aktywne",   
+                nazwa: "UW Siebenbäumen (Siedenbrunzow)",
+                etykieta: "Siebenbrunzow",
+                lat: 53.907861,      
+                lng: 13.144389,      
+                kierownikNazwa: "Do uzupełnienia", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Do uzupełnienia", 
+                telBhp: "+48000000000"              
+            },
+            {
+                typ: "SE",           
+                status: "nieaktywne",   
+                nazwa: "UW Semlin",
+                etykieta: "Semlin",
+                lat: 53.147361,      
+                lng: 11.758278,      
+                kierownikNazwa: "Do uzupełnienia", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Do uzupełnienia", 
+                telBhp: "+48000000000"              
             }
         ];
+
+        // Tablica pomocnicza do zbierania współrzędnych w celu automatycznego wyśrodkowania mapy
+        const punktyDoKadrowania = [];
 
         // Wygenerowanie obiektów na mapie
         projekty.forEach(projekt => {
             const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
+
+            // Dodanie punktu do tablicy kadrowania widoku
+            punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
             // Logika obsługi przycisku BHP w przypadku braku osoby
             let bhpButtonHtml = '';
@@ -298,6 +328,11 @@
             // Menu akcji otwierane po kliknięciu
             marker.bindPopup(popupContent);
         });
+
+        // AUTOMATYCZNE KADROWANIE: Mapa sama dopasowuje zoom, aby objąć zasięgiem Polskę oraz Niemcy
+        if (punktyDoKadrowania.length > 0) {
+            map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
+        }
     </script>
 
 </body>
