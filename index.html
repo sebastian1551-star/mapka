@@ -1,5 +1,94 @@
-<iframe src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxIeFYqiakHP8wHw&ehbc=2E312F" 
-        style="width: 100%; height: 450px; max-height: 70vh; border: 0;" 
-        allowfullscreen="" 
-        loading="lazy">
-</iframe>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Projektów ENPROM</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 10px;
+        }
+
+        /* Główny kontener mapy */
+        .map-container {
+            position: relative; /* To pozwala przyciskom "leżeć" na mapie */
+            width: 100%;
+            height: 80vh; /* Mapa zajmie 80% wysokości ekranu telefonu */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Sama mapa */
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Panel z przyciskami nałożony NA mapę */
+        .floating-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 999; /* Wymusza, by przyciski były zawsze na wierzchu */
+        }
+
+        /* Wygląd pływających przycisków */
+        .phone-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+
+        /* Efekt kliknięcia palcem */
+        .phone-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Kolory przycisków */
+        .kierownik {
+            background-color: #007bff; /* Niebieski */
+        }
+        .bhp {
+            background-color: #28a745; /* Zielony */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="map-container">
+        
+        <div class="floating-buttons">
+            <a href="tel:+48123456789" class="phone-btn kierownik">
+                📞 Kierownik
+            </a>
+            <a href="tel:+48987654321" class="phone-btn bhp">
+                ⛑️ BHP
+            </a>
+        </div>
+
+        <iframe src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxIeFYqiakHP8wHw&ehbc=2E312F" allowfullscreen="" loading="lazy"></iframe>
+
+    </div>
+
+</body>
+</html>
