@@ -145,10 +145,10 @@
             });
         }
 
-        // Centrowanie mapy na obszar Polski, aby widzieć wszystkie 3 projekty jednocześnie
+        // Centrowanie mapy na obszar Polski
         const map = L.map('map', {
             zoomSnap: 0.5
-        }).setView([50.9500, 17.6000], 7.5);
+        }).setView([51.4000, 18.5000], 7);
 
         // Ciemny, czytelny podkład mapy
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -172,13 +172,14 @@
         }
 
         // ======================================================================
-        // PANEL ZARZĄDZANIA PROJEKTAMI (WSZYSTKIE SĄ TERAZ USTAWIONE JAKO AKTYWNE)
+        // PANEL ZARZĄDZANIA PROJEKTAMI
         // ======================================================================
         const projekty = [
             {
                 typ: "LN",           
                 status: "aktywne",   
                 nazwa: "110 KV Bolesławiec - Świętoszów",
+                etykieta: "Bolesławiec",
                 lat: 51.287194,  
                 lng: 15.594056,  
                 kierownikNazwa: "Filip Correia",
@@ -190,6 +191,7 @@
                 typ: "SE",           
                 status: "aktywne",   
                 nazwa: "SE 400/110 kV Rokitnica",
+                etykieta: "Rokitnica",
                 lat: 50.372361,      
                 lng: 18.771306,      
                 kierownikNazwa: "Do uzupełnienia", 
@@ -198,21 +200,34 @@
                 telBhp: "+48000000000"          
             },
             {
-                typ: "LN",           // LN = Linia (Niebieski znacznik)
-                status: "aktywne",   // Projekt oznaczony jako aktywny
+                typ: "LN",           
+                status: "aktywne",   
                 nazwa: "Linia 110/220 kV CPK",
-                lat: 52.128795,      // Współrzędne wyciągnięte z linku nawigacji
-                lng: 20.424361,      
+                etykieta: "CPK",
+                lat: 52.209911,      
+                lng: 20.475766,      
                 kierownikNazwa: "Joanna Nowicka", 
                 telKierownik: "+48533350557",   
-                bhpNazwa: "Brak osoby", // Oznaczenie braku osoby BHP
-                telBhp: ""              // Pusty numer
+                bhpNazwa: "Brak osoby", 
+                telBhp: ""              
+            },
+            {
+                typ: "SE",           
+                status: "aktywne",   
+                nazwa: "SE Leszno",
+                etykieta: "Leszno",
+                lat: 51.877000,      
+                lng: 16.589056,      
+                kierownikNazwa: "Maciej Waszak", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Rafał Rawecki", 
+                telBhp: "+48000000000"              
             }
         ];
 
         // Wygenerowanie obiektów na mapie
         projekty.forEach(projekt => {
-            const googleMapsUrl = `https://maps.app.goo.gl/FmtZrAKQA8W1Wa7E9{projekt.lat},${projekt.lng}`;
+            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
 
@@ -223,7 +238,7 @@
             } else {
                 bhpButtonHtml = `
                     <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
-                        ⛑️ BHP ${projekt.bhpNazwa}
+                        ⛑️ BHP: ${projekt.bhpNazwa}
                     </a>`;
             }
 
@@ -248,8 +263,8 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Stały, pomniejszony dymek tekstowy z pierwszym członem nazwy (np. LN: Linia, SE: SE, LN: 110)
-            marker.bindTooltip(`${projekt.typ}: ${projekt.nazwa.split(' ')[0]}`, {
+            // Stały, pomniejszony dymek tekstowy z typem i dedykowaną nazwą (np. LN: CPK, SE: Leszno)
+            marker.bindTooltip(`${projekt.typ}: ${projekt.etykieta}`, {
                 permanent: true, 
                 direction: 'top',
                 className: 'custom-tooltip',
