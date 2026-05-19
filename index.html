@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mapa Projektów ENPROM</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        /* Reset marginesów, aby mapa zajmowała 100% ekranu bez białych ramek */
+        /* Pełnoekranowa mapa */
         html, body {
             margin: 0;
             padding: 0;
@@ -13,183 +17,124 @@
             height: 100%;
             overflow: hidden;
             font-family: Arial, sans-serif;
-            background-color: #000;
+            background-color: #f4f4f4;
         }
 
-        /* Główny kontener mapy */
-        .map-container {
-            position: relative;
+        #map {
             width: 100%;
             height: 100vh;
-            margin: 0;
-            padding: 0;
         }
 
-        /* Osadzona mapa Google */
-        .map-container iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            display: block;
+        /* Stylizacja dymków wewnątrz mapy (Popup) */
+        .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            padding: 4px;
         }
 
-        /* Półprzezroczysty dymek nad mapą (środek-góra ekranu) */
-        .project-selector-box {
-            position: absolute;
-            top: 70px; /* Bezpieczna odległość od paska wyszukiwania Google */
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.9); /* Eleganckie, półprzezroczyste białe tło */
-            backdrop-filter: blur(8px); /* Efekt rozmycia szkła za dymkiem */
-            -webkit-backdrop-filter: blur(8px);
-            padding: 14px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-            z-index: 9999;
-            width: 85%;
-            max-width: 340px;
-            box-sizing: border-box;
-            border: 1px solid rgba(255,255,255,0.4);
+        .popup-container {
             text-align: center;
+            min-width: 200px;
         }
 
-        .project-selector-box label {
-            display: block;
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-
-        /* Wybór projektu - ładny select */
-        .styled-select {
-            width: 100%;
-            padding: 10px;
+        .popup-title {
             font-size: 15px;
             font-weight: bold;
-            border: 2px solid #007bff;
-            border-radius: 10px;
-            background-color: white;
-            color: #333;
-            outline: none;
-            cursor: pointer;
+            color: #222;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 6px;
         }
 
-        /* Kontener na przyciski wewnątrz dymka */
-        .contact-buttons {
-            display: none; /* Ukryte, dopóki użytkownik nie wybierze projektu */
-            margin-top: 12px;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        /* Wygląd przycisków telefonicznych */
-        .phone-btn {
+        /* Styl przycisków akcji w dymku */
+        .popup-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            color: white;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 10px 12px;
+            color: white !important; /* Wymuszenie koloru czcionki w Leaflet */
             text-decoration: none;
             font-weight: bold;
-            font-size: 14px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            font-size: 13px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
             transition: transform 0.1s ease;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .phone-btn:active {
+        .popup-btn:active {
             transform: scale(0.96);
         }
 
-        /* Dynamiczne kolory */
+        /* Kolory przycisków */
         .kierownik { background-color: #007bff; }
         .bhp { background-color: #28a745; }
-
-        /* Styl dla opisu pod przyciskami */
-        .project-name-display {
-            font-size: 14px;
-            font-weight: bold;
-            color: #222;
-            margin-bottom: 4px;
-            display: block;
-        }
+        .nawiguj { background-color: #ffc107; color: #000 !important; } /* Żółty z czarnym tekstem dla widoczności */
     </style>
 </head>
 <body>
 
-    <div class="map-container">
-        
-        <!-- Półprzezroczysty dymek z wyborem projektu -->
-        <div class="project-selector-box">
-            <label for="project-choice">Wybierz lokalizację projektu</label>
-            <select id="project-choice" class="styled-select" onchange="updateContacts()">
-                <option value="">-- Wybierz projekt --</option>
-                <option value="boleslawiec">Bolesławiec</option>
-                <option value="rokitnica">Ząbkowice Śląskie (Rokitnica)</option>
-            </select>
-
-            <!-- Sekcja z telefonami, która zmienia się dynamicznie -->
-            <div id="contact-section" class="contact-buttons">
-                <span id="current-project-title" class="project-name-display"></span>
-                
-                <a id="link-kierownik" href="tel:" class="phone-btn kierownik">
-                    📞 Kierownik: <span id="num-kierownik"></span>
-                </a>
-                <a id="link-bhp" href="tel:" class="phone-btn bhp">
-                    ⛑️ BHP: <span id="num-bhp"></span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Twoja działająca mapa Google -->
-        <iframe src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxIeFYqiakHP8wHw&ehbc=2E312F" allowfullscreen="" loading="lazy"></iframe>
-
-    </div>
+    <div id="map"></div>
 
     <script>
-        // Baza danych projektów - tutaj możesz łatwo zmieniać numery telefonów
-        const projectData = {
-            boleslawiec: {
-                title: "Projekt Bolesławiec",
-                kierownik: "+48111222333", // Wpisz właściwy numer
-                bhp: "+48444555666"        // Wpisz właściwy numer
+        // 1. Inicjalizacja mapy (środek ustawiony na centralną Polskę, zoom 7)
+        const map = L.map('map').setView([52.0, 19.0], 7);
+
+        // 2. Ładowanie darmowych kafelków OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. Baza danych projektów (współrzędne, nazwy i telefony)
+        const projekty = [
+            {
+                nazwa: "110 KV Bolesławiec - Świętoszów",
+                lat: 51.267,  // Szerokość geograficzna Bolesławca
+                lng: 15.567,  // Długość geograficzna Bolesławca
+                telKierownik: "+48533350594", 
+                telBhp: "+48444555666" 
             },
-            rokitnica: {
-                title: "Projekt ZRokitnica",
-                kierownik: "+48777888999", // Wpisz właściwy numer
-                bhp: "+48000111222"        // Wpisz właściwy numer
+            {
+                nazwa: "Projekt Ząbkowice Śląskie (Rokitnica)",
+                lat: 50.588,  // Przykładowe współrzędne dla Rokitnicy / Ząbkowic
+                lng: 16.811,
+                telKierownik: "+48777888999",
+                telBhp: "+48000111222"
             }
-        };
+        ];
 
-        function updateContacts() {
-            const select = document.getElementById('project-choice');
-            const container = document.getElementById('contact-section');
-            const selectedValue = select.value;
+        // 4. Automatyczne dodawanie pinezek i dymków na mapę
+        projekty.forEach(projekt => {
+            // Tworzymy link do nawigacji Google Maps na podstawie współrzędnych geograficznych
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${projekt.lat},${projekt.lng}`;
 
-            if (selectedValue && projectData[selectedValue]) {
-                const data = projectData[selectedValue];
-                
-                // Aktualizacja tekstów i linków w dymku
-                document.getElementById('current-project-title').innerText = data.title;
-                
-                document.getElementById('link-kierownik').href = "tel:" + data.kierownik;
-                document.getElementById('num-kierownik').innerText = data.kierownik;
-                
-                document.getElementById('link-bhp').href = "tel:" + data.bhp;
-                document.getElementById('num-bhp').innerText = data.bhp;
-                
-                // Pokazanie przycisków
-                container.style.display = 'flex';
-            } else {
-                // Ukrycie przycisków, jeśli nic nie wybrano
-                container.style.display = 'none';
-            }
-        }
+            // Budujemy wygląd dymka (HTML), który pojawi się po kliknięciu w pinezkę
+            const popupContent = `
+                <div class="popup-container">
+                    <div class="popup-title">${projekt.nazwa}</div>
+                    
+                    <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">
+                        📞 Kierownik: ${projekt.telKierownik}
+                    </a>
+                    
+                    <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
+                        ⛑️ BHP: ${projekt.telBhp}
+                    </a>
+                    
+                    <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">
+                        🚗 Nawiguj w Google Maps
+                    </a>
+                </div>
+            `;
+
+            // Dodajemy fizyczną pinezkę do mapy
+            L.marker([projekt.lat, projekt.lng])
+                .addTo(map)
+                .bindPopup(popupContent);
+        });
     </script>
 
 </body>
