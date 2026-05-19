@@ -24,7 +24,7 @@
             height: 100vh;
         }
 
-        /* ZMNIEJSZONE NAPISY NA MAPIE - idealne na telefon */
+        /* ZMNIEJSZONE NAPISY NA MAPIE */
         .custom-tooltip {
             background: rgba(30, 30, 30, 0.85) !important;
             backdrop-filter: blur(4px);
@@ -36,6 +36,7 @@
             padding: 2px 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             white-space: nowrap;
+            transition: opacity 0.2s;
         }
         
         .custom-tooltip::before {
@@ -103,14 +104,14 @@
         /* Styl dla zablokowanego przycisku BHP (brak osoby) */
         .popup-btn.disabled {
             background-color: #6c757d;
-            pointer-events: none; /* Wyłącza klikanie */
+            pointer-events: none;
             opacity: 0.6;
             box-shadow: none;
         }
 
-        .ukończony-projekt {
-            opacity: 0.35 !important;
-            filter: grayscale(90%);
+        /* STYL DLA PROJEKTÓW NIEAKTYWNYCH (PRZEZROCZYSTOŚĆ) */
+        .projekt-nieaktywny {
+            opacity: 0.3 !important;
         }
     </style>
 </head>
@@ -119,18 +120,17 @@
     <div id="map"></div>
 
     <script>
-        // Automatyczny zapis w pamięci podręcznej (Cache) dla błyskawicznego działania offline/w terenie
+        // Cache offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v1';
+                    const CACHE_NAME = 'enprom-map-v2';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
                         'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                        'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                        'https://cdnjs.github.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png'
+                        'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
                     ];
                     self.addEventListener('install', e => {
                         e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
@@ -145,16 +145,17 @@
             });
         }
 
-        // Inicjalizacja mapy bez sztywnego punktu środkowego (będzie dynamicznie dopasowany na końcu)
+        // Inicjalizacja mapy
         const map = L.map('map', {
             zoomSnap: 0.5
         });
 
-        // Ciemny, czytelny podkład mapy
+        // Ciemny podkład mapy
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        // Generator ikon - usunięty problematyczny cień powodujący kwadraty
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
             if (typ === "SE") {
@@ -162,18 +163,15 @@
             }
             return L.icon({
                 iconUrl: url,
-                shadowUrl: 'https://cdnjs.github.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                shadowUrl: '', // USUNIĘTE KWADRATY (brak cienia)
                 iconSize: [22, 36],
                 iconAnchor: [11, 36],
                 popupAnchor: [1, -30],
-                shadowSize: [36, 36],
-                className: status === "nieaktywne" ? "ukończony-projekt" : ""
+                className: status === "nieaktywne" ? "projekt-nieaktywny" : ""
             });
         }
 
-        // ======================================================================
-        // PANEL ZARZĄDZANIA PROJEKTAMI
-        // ======================================================================
+        // Baza projektów
         const projekty = [
             {
                 typ: "LN",           
@@ -270,22 +268,42 @@
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Do uzupełnienia", 
                 telBhp: "+48000000000"              
+            },
+            {
+                typ: "SE",           
+                status: "aktywne",   
+                nazwa: "UW Jesow",
+                etykieta: "Jesow",
+                lat: 53.389861,      
+                lng: 11.016417,      
+                kierownikNazwa: "Do uzupełnienia", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Do uzupełnienia", 
+                telBhp: "+48000000000"              
+            },
+            {
+                typ: "LN",           
+                status: "aktywne",   
+                nazwa: "LN Demon Munstenberg",
+                etykieta: "Munstenberg",
+                lat: 52.597977,      
+                lng: 13.623709,      
+                kierownikNazwa: "Marcin Gralak", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Brak osoby", 
+                telBhp: ""              
             }
         ];
 
-        // Tablica pomocnicza do zbierania współrzędnych w celu automatycznego wyśrodkowania mapy
         const punktyDoKadrowania = [];
 
-        // Wygenerowanie obiektów na mapie
         projekty.forEach(projekt => {
             const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
 
-            // Dodanie punktu do tablicy kadrowania widoku
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
-            // Logika obsługi przycisku BHP w przypadku braku osoby
             let bhpButtonHtml = '';
             if (projekt.bhpNazwa === "Brak osoby" || !projekt.telBhp) {
                 bhpButtonHtml = `<div class="popup-btn bhp disabled">⛑️ BHP: Brak osoby</div>`;
@@ -317,19 +335,20 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Stały, pomniejszony dymek tekstowy z typem i dedykowaną nazwą
+            // Jeśli projekt jest nieaktywny, dodajemy klasę przezroczystości również do etykiety tekstowej
+            const klasaTooltipu = projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip";
+
             marker.bindTooltip(`${projekt.typ}: ${projekt.etykieta}`, {
                 permanent: true, 
                 direction: 'top',
-                className: 'custom-tooltip',
+                className: klasaTooltipu,
                 offset: [0, -6]
             });
 
-            // Menu akcji otwierane po kliknięciu
             marker.bindPopup(popupContent);
         });
 
-        // AUTOMATYCZNE KADROWANIE: Mapa sama dopasowuje zoom, aby objąć zasięgiem Polskę oraz Niemcy
+        // Dynamiczne dopasowanie widoku do wszystkich punktów
         if (punktyDoKadrowania.length > 0) {
             map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
         }
