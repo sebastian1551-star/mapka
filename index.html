@@ -3,172 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Projekty ENPROM - Mapa Mobilna</title>
+    <title>Mapa Projektów ENPROM</title>
     <style>
-        /* Pełnoekranowy reset stylów dla telefonów */
+        /* Reset marginesów, aby mapa zajmowała 100% ekranu bez białych ramek */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
+            overflow: hidden; /* Zapobiega podwójnemu przewijaniu strony */
+            font-family: Arial, sans-serif;
+            background-color: #000; /* Czarne tło podczas ładowania mapy */
         }
 
-        /* Główny kontener aplikacji */
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100vh;
-        }
-
-        /* STREFA MAPY - czysta, oryginalna mapa Google */
-        .map-section {
-            flex: 1; /* Zajmuje całą dostępną przestrzeń w pionie */
-            width: 100%;
+        /* Główny kontener - teraz idealnie rozciąga się w dół i w bok */
+        .map-container {
             position: relative;
+            width: 100%;
+            height: 100vh; /* 100% wysokości widocznego ekranu na telefonie */
+            margin: 0;
+            padding: 0;
         }
 
-        .map-section iframe {
+        /* Sama mapa z Google - wypełnia cały kontener */
+        .map-container iframe {
             width: 100%;
             height: 100%;
             border: 0;
             display: block;
         }
 
-        /* PANEL SZYBKIEGO KONTAKTU NA DOLE EKRANU */
-        .bottom-contact-panel {
-            background-color: #ffffff;
-            border-top: 3px solid #e41f1f; /* Czerwień firmowa ENPROM */
-            padding: 10px 14px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
-            z-index: 9999;
-        }
-
-        .panel-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        /* Układ kafelków z projektami */
-        .projects-grid {
+        /* Panel z przyciskami nałożony na mapę */
+        .floating-buttons {
+            position: absolute;
+            top: 70px; /* Przesunięte w dół, aby nie zasłaniać paska wyszukiwania Google Maps */
+            right: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 180px;
-            overflow-y: auto;
+            z-index: 9999; /* Maksymalny priorytet warstwy, by przyciski były zawsze na wierzchu */
         }
 
-        .project-card {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 8px 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .project-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .project-name {
-            font-size: 13px;
-            font-weight: bold;
-            color: #111;
-        }
-
-        .project-manager {
-            font-size: 11px;
-            color: #666;
-            margin-top: 2px;
-        }
-
-        /* Przyciski akcji dzwonienia i nawigacji */
-        .btn-group {
-            display: flex;
-            gap: 6px;
-        }
-
-        .action-button {
+        /* Wygląd pływających przycisków dopasowany do dotyku palcem */
+        .phone-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 6px;
+            gap: 8px;
+            padding: 12px 16px; /* Większy obszar kliknięcia (wygodniejsze na telefonie) */
             color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 25px; /* Zaokrąglone "pigułki" wyglądają nowocześniej */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
             transition: transform 0.1s ease;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: transparent; /* Usuwa brzydkie niebieskie podświetlenie w Safari/Chrome na telefonie */
         }
 
-        .action-button:active {
-            transform: scale(0.94);
+        /* Efekt kliknięcia palcem */
+        .phone-btn:active {
+            transform: scale(0.92);
         }
 
-        .btn-call {
-            background-color: #28a745; /* Zielony dla połączeń */
-            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        /* Kolory przycisków */
+        .kierownik {
+            background-color: #007bff; /* Intensywny niebieski */
         }
-
-        .btn-nav {
-            background-color: #007bff; /* Niebieski dla nawigacji */
-            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        .bhp {
+            background-color: #28a745; /* Intensywny zielony */
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
+    <div class="map-container">
         
-        <div class="map-section">
-            <iframe 
-                src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw" 
-                allowfullscreen="" 
-                loading="eager">
-            </iframe>
+        <div class="floating-buttons">
+            <a href="tel:+48123456789" class="phone-btn kierownik">
+                📞 Kierownik
+            </a>
+            <a href="tel:+48987654321" class="phone-btn bhp">
+                ⛑️ BHP
+            </a>
         </div>
 
-        <div class="bottom-contact-panel">
-            <div class="panel-title">Szybkie menu budowy (Wybierz akcję pod kciukiem)</div>
-            
-            <div class="projects-grid">
-                
-                <div class="project-card">
-                    <div class="project-info">
-                        <span class="project-name">LK Bolesławiec</span>
-                        <span class="project-manager">Kierownik: Filip Correia</span>
-                    </div>
-                    <div class="btn-group">
-                        <a href="tel:533350594" class="action-button btn-call">📞 Zadzwoń</a>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=51.2658553,15.5657397" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
-                    </div>
-                </div>
-
-                <div class="project-card">
-                    <div class="project-info">
-                        <span class="project-name">SE Rokitnica</span>
-                        <span class="project-manager">Kierownik: Kontakt Główny</span>
-                    </div>
-                    <div class="btn-group">
-                        <a href="tel:+48600100200" class="action-button btn-call">📞 Zadzwoń</a>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=50.3664515,18.7917144" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+        <iframe src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxIeFYqiakHP8wHw&ehbc=2E312F" allowfullscreen="" loading="lazy"></iframe>
 
     </div>
 
