@@ -31,9 +31,9 @@
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
             color: #fff !important;
             font-weight: 600;
-            font-size: 10px; /* Zmniejszona czcionka */
+            font-size: 10px;
             border-radius: 4px;
-            padding: 2px 6px; /* Mniejsze marginesy */
+            padding: 2px 6px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
             white-space: nowrap;
         }
@@ -100,6 +100,14 @@
         .bhp { background-color: #28a745; }
         .nawiguj { background-color: #ffc107; color: #000 !important; }
 
+        /* Styl dla zablokowanego przycisku BHP (brak osoby) */
+        .popup-btn.disabled {
+            background-color: #6c757d;
+            pointer-events: none; /* Wyłącza klikanie */
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
         .ukończony-projekt {
             opacity: 0.4 !important;
             filter: grayscale(80%);
@@ -111,7 +119,7 @@
     <div id="map"></div>
 
     <script>
-        // Automatyczny zapis w pamięci podręcznej (Cache) dla błyskawicznego działania
+        // Automatyczny zapis w pamięci podręcznej (Cache) dla błyskawicznego działania offline/w terenie
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
@@ -137,10 +145,10 @@
             });
         }
 
-        // Centrowanie mapy na południowy-zachód Polski
+        // Centrowanie mapy na obszar Polski, aby widzieć wszystkie 3 projekty jednocześnie
         const map = L.map('map', {
             zoomSnap: 0.5
-        }).setView([50.8500, 17.1000], 8);
+        }).setView([50.9500, 17.6000], 7.5);
 
         // Ciemny, czytelny podkład mapy
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -155,7 +163,7 @@
             return L.icon({
                 iconUrl: url,
                 shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [22, 36], // Delikatnie zmniejszone ikony, by pasowały do mniejszych napisów
+                iconSize: [22, 36],
                 iconAnchor: [11, 36],
                 popupAnchor: [1, -30],
                 shadowSize: [36, 36],
@@ -164,12 +172,12 @@
         }
 
         // ======================================================================
-        // PANEL ZARZĄDZANIA PROJEKTAMI
+        // PANEL ZARZĄDZANIA PROJEKTAMI (WSZYSTKIE SĄ TERAZ USTAWIONE JAKO AKTYWNE)
         // ======================================================================
         const projekty = [
             {
                 typ: "LN",           
-                status: "aktywne",   // "aktywne" lub "nieaktywne"
+                status: "aktywne",   
                 nazwa: "110 KV Bolesławiec - Świętoszów",
                 lat: 51.287194,  
                 lng: 15.594056,  
@@ -180,22 +188,44 @@
             },
             {
                 typ: "SE",           
-                status: "aktywne",   // Zmień na "nieaktywne", aby oznaczyć jako ukończone
+                status: "aktywne",   
                 nazwa: "SE 400/110 kV Rokitnica",
-                lat: 50.372361,      // IDEALNE WSPÓŁRZĘDNE Z TWOJEGO GPS: 50°22'20.5"N
-                lng: 18.771306,      // IDEALNE WSPÓŁRZĘDNE Z TWOJEGO GPS: 18°46'16.7"E
+                lat: 50.372361,      
+                lng: 18.771306,      
                 kierownikNazwa: "Do uzupełnienia", 
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Do uzupełnienia",      
                 telBhp: "+48000000000"          
+            },
+            {
+                typ: "LN",           // LN = Linia (Niebieski znacznik)
+                status: "aktywne",   // Projekt oznaczony jako aktywny
+                nazwa: "Linia 110/220 kV CPK",
+                lat: 52.128795,      // Współrzędne wyciągnięte z linku nawigacji
+                lng: 20.424361,      
+                kierownikNazwa: "Joanna Nowicka", 
+                telKierownik: "+48533350557",   
+                bhpNazwa: "Brak osoby", // Oznaczenie braku osoby BHP
+                telBhp: ""              // Pusty numer
             }
         ];
 
         // Wygenerowanie obiektów na mapie
         projekty.forEach(projekt => {
-            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${projekt.lat},${projekt.lng}`;
+            const googleMapsUrl = `https://maps.app.goo.gl/FmtZrAKQA8W1Wa7E9{projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
+
+            // Logika obsługi przycisku BHP w przypadku braku osoby
+            let bhpButtonHtml = '';
+            if (projekt.bhpNazwa === "Brak osoby" || !projekt.telBhp) {
+                bhpButtonHtml = `<div class="popup-btn bhp disabled">⛑️ BHP: Brak osoby</div>`;
+            } else {
+                bhpButtonHtml = `
+                    <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
+                        ⛑️ BHP ${projekt.bhpNazwa}
+                    </a>`;
+            }
 
             const popupContent = `
                 <div class="popup-container">
@@ -206,9 +236,7 @@
                         📞 Kier. ${projekt.kierownikNazwa}
                     </a>
                     
-                    <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
-                        ⛑️ BHP ${projekt.bhpNazwa}
-                    </a>
+                    ${bhpButtonHtml}
                     
                     <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">
                         🚗 Nawiguj w Google Maps
@@ -220,15 +248,15 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Stały, pomniejszony dymek tekstowy
-            marker.bindTooltip(`${projekt.typ}: ${projekt.nazwa.split(' ')[0]}`, { // Wyświetla skróconą nazwę, np "SE: SE" lub "LN: 110" dla czytelności
+            // Stały, pomniejszony dymek tekstowy z pierwszym członem nazwy (np. LN: Linia, SE: SE, LN: 110)
+            marker.bindTooltip(`${projekt.typ}: ${projekt.nazwa.split(' ')[0]}`, {
                 permanent: true, 
                 direction: 'top',
                 className: 'custom-tooltip',
                 offset: [0, -6]
             });
 
-            // Pełne menu pod kliknięciem
+            // Menu akcji otwierane po kliknięciu
             marker.bindPopup(popupContent);
         });
     </script>
