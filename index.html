@@ -9,15 +9,14 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        /* Pełnoekranowa mapa */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
         }
 
         #map {
@@ -25,55 +24,89 @@
             height: 100vh;
         }
 
-        /* Stylizacja dymków wewnątrz mapy (Popup) */
-        .leaflet-popup-content-wrapper {
-            background: rgba(255, 255, 255, 0.95);
+        /* Styl stałych etykiet nad pinezkami (widocznych od razu) */
+        .custom-tooltip {
+            background: rgba(30, 30, 30, 0.85) !important;
             backdrop-filter: blur(4px);
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 6px;
+            padding: 4px 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        /* Usunięcie domyślnego dzióbka dymka Leaflet */
+        .custom-tooltip::before {
+            border-top-color: rgba(30, 30, 30, 0.85) !important;
+        }
+
+        /* Stylizacja okienka akcji po kliknięciu */
+        .leaflet-popup-content-wrapper {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             padding: 4px;
         }
 
         .popup-container {
             text-align: center;
-            min-width: 220px;
+            min-width: 230px;
         }
 
         .popup-title {
             font-size: 14px;
             font-weight: bold;
-            color: #222;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 6px;
+            color: #111;
+            margin-bottom: 4px;
             line-height: 1.3;
         }
 
-        /* Styl przycisków akcji w dymku */
+        /* Statusy wewnątrz dymka */
+        .status-badge {
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+        }
+        .status-aktywne { background-color: #e3f2fd; color: #0d47a1; }
+        .status-nieaktywne { background-color: #ffebee; color: #c62828; }
+
+        /* Przyciski szybkiego kontaktu */
         .popup-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             margin-top: 6px;
-            padding: 10px 12px;
-            color: white !important; /* Wymuszenie koloru czcionki w Leaflet */
+            padding: 12px;
+            color: white !important;
             text-decoration: none;
             font-weight: bold;
             font-size: 13px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-            transition: transform 0.1s ease;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
         }
 
         .popup-btn:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
 
-        /* Kolory przycisków */
         .kierownik { background-color: #007bff; }
+        .kierownik:hover { background-color: #0056b3; }
         .bhp { background-color: #28a745; }
+        .bhp:hover { background-color: #1e7e34; }
         .nawiguj { background-color: #ffc107; color: #000 !important; }
+        .nawiguj:hover { background-color: #e0a800; }
+
+        /* Styl dla nieaktywnych (ukończonych) pinezek na mapie */
+        .ukończony-projekt {
+            opacity: 0.45 !important; /* Wizualne zgaszenie pinezki na mapie */
+            filter: grayscale(60%);
+        }
     </style>
 </head>
 <body>
@@ -81,64 +114,102 @@
     <div id="map"></div>
 
     <script>
-        // 1. Inicjalizacja mapy (środek ustawiony na południową Polskę, bliżej projektów)
+        // 1. Inicjalizacja mapy (nocny/ciemny styl pasuje do nowoczesnego ENPROMu)
         const map = L.map('map').setView([50.8, 17.2], 8);
 
-        // 2. Ładowanie darmowych kafelków OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+        // Używamy ładniejszego, ciemniejszego podkładu mapy (CartoDB DarkMatter), żeby kolory pinezek "świeciły"
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO'
         }).addTo(map);
 
-        // 3. Baza danych projektów z dokładnymi współrzędnymi i danymi personalnymi
+        // 2. Generator kolorowych ikon przy użyciu zewnętrznych grafik z repozytorium Leaflet
+        function stworzIkone(typ, status) {
+            let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png"; // Domyślny LN (Niebieski)
+            
+            if (typ === "SE") {
+                url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png"; // SE (Zielony)
+            }
+
+            return L.icon({
+                iconUrl: url,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41],
+                className: status === "nieaktywne" ? "ukończony-projekt" : "" // Automatyczne wygaszenie jeśli ukończony
+            });
+        }
+
+        // 3. PANEL ZARZĄDZANIA PROJEKTAMI (TUTAJ EDYTUJESZ DANE I STATUSY)
         const projekty = [
             {
+                typ: "LN", // LN = Linia (Niebieski znacznik)
+                status: "aktywne", // Wpisz "aktywne" lub "nieaktywne"
                 nazwa: "110 KV Bolesławiec - Świętoszów",
                 lat: 51.287194,  
                 lng: 15.594056,  
                 kierownikNazwa: "Filip Correia",
                 telKierownik: "+48533350594", 
-                bhpNazwa: "Jan Kowalski", // Wpisz właściwe imię i nazwisko BHP
+                bhpNazwa: "Jan Kowalski",
                 telBhp: "+48444555666" 
             },
             {
-                nazwa: "SE 400/110 kV Rokitnica (Zabrze)",
-                lat: 50.354600,  // Dokładne współrzędne stacji przy ul. Witosa 15, Zabrze
+                typ: "SE", // SE = Stacja (Zielony znacznik)
+                status: "nieaktywne", // PRZYKŁAD: Ta stacja została oznaczona jako UKOŃCZONA
+                nazwa: "SE 400/110 kV Rokitnica",
+                lat: 50.354600,  
                 lng: 18.761800,
-                kierownikNazwa: "Tomasz Nowak", // Wpisz właściwe imię i nazwisko kierownika
+                kierownikNazwa: "Tomasz Nowak",
                 telKierownik: "+48777888999",
-                bhpNazwa: "Andrzej Zieliński",  // Wpisz właściwe imię i nazwisko BHP
+                bhpNazwa: "Andrzej Zieliński",
                 telBhp: "+48000111222"
             }
         ];
 
-        // 4. Automatyczne dodawanie pinezek i dymków na mapę
+        // 4. Rysowanie obiektów na mapie
         projekty.forEach(projekt => {
-            // Poprawiony link do nawigacji Google Maps na podstawie dokładnych współrzędnych
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${projekt.lat},${projekt.lng}`;
+            
+            // Przygotowanie tekstu statusu
+            const statusTekst = projekt.status === "aktywne" ? "🟢 W TRAKCIE REALIZACJI" : "⚠️ PROJEKT UKOŃCZONY";
+            const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
 
-            // Budujemy wygląd dymka (HTML)
+            // Budowanie struktury dymka menu akcji
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
+                    <div class="status-badge ${statusKlasa}">${statusTekst}</div>
                     
                     <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">
-                        📞 Kier. ${projekt.kierownikNazwa}: ${projekt.telKierownik}
+                        📞 Kier. ${projekt.kierownikNazwa}
                     </a>
                     
                     <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
-                        ⛑️ BHP ${projekt.bhpNazwa}: ${projekt.telBhp}
+                        ⛑️ BHP ${projekt.bhpNazwa}
                     </a>
                     
                     <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">
-                        🚗 Nawiguj w Google Maps
+                        🚗 Nawiguj do celu
                     </a>
                 </div>
             `;
 
-            // Dodajemy fizyczną pinezkę do mapy
-            L.marker([projekt.lat, projekt.lng])
-                .addTo(map)
-                .bindPopup(popupContent);
+            // Generowanie znacznika z odpowiednim kolorem i zachowaniem statusu
+            const marker = L.marker([projekt.lat, projekt.lng], {
+                icon: stworzIkone(projekt.typ, projekt.status)
+            }).addTo(map);
+
+            // Podpięcie stałego dymka tekstowego (widocznego od razu nad pinezką)
+            marker.bindTooltip(`${projekt.typ}: ${projekt.nazwa}`, {
+                permanent: true, 
+                direction: 'top',
+                className: 'custom-tooltip',
+                offset: [0, -10]
+            });
+
+            // Podpięcie menu kontaktowego aktywowanego po kliknięciu
+            marker.bindPopup(popupContent);
         });
     </script>
 
