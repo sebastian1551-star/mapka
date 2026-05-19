@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Projekty ENPROM - Interaktywna Mapa</title>
     <style>
-        /* Pełny ekran na telefonie bez marginesów */
         html, body {
             margin: 0;
             padding: 0;
@@ -22,7 +21,7 @@
             height: 100vh;
         }
 
-        /* Oryginalna mapa Google w tle */
+        /* Mapa Google zajmująca pełny ekran */
         .map-wrapper iframe {
             width: 100%;
             height: 100%;
@@ -30,7 +29,7 @@
             display: block;
         }
 
-        /* BAZOWY STYL DLA ETYKIET UNOSZĄCYCH SIĘ NAD PINEZKAMI */
+        /* STYLIZACJA PRZYCISKÓW / ETYKIET NAD PINEZKAMI */
         .project-marker-overlay {
             position: absolute;
             z-index: 999;
@@ -38,9 +37,8 @@
             font-weight: bold;
         }
 
-        /* Wygląd głównego przycisku-etykiety */
         .marker-trigger {
-            background-color: rgba(228, 31, 31, 0.9); /* Kolor ENPROM z lekką przezroczystością */
+            background-color: rgba(228, 31, 31, 0.95); /* Czerwień ENPROM */
             color: white;
             padding: 6px 10px;
             border-radius: 12px;
@@ -51,9 +49,9 @@
             border: 1px solid rgba(255,255,255,0.4);
         }
 
-        /* Wygląd rozwijanego mini-menu z kontaktami */
+        /* Rozwijane menu z opcjami */
         .marker-dropdown {
-            display: none; /* Domyślnie ukryte */
+            display: none;
             position: absolute;
             top: 28px;
             left: 50%;
@@ -65,12 +63,10 @@
             min-width: 140px;
         }
 
-        /* Pokazywanie menu po kliknięciu (klasa dodawana przez JavaScript) */
         .project-marker-overlay.active .marker-dropdown {
             display: block;
         }
 
-        /* Opcje wewnątrz menu (Telefon, BHP, Nawigacja) */
         .dropdown-item {
             display: flex;
             align-items: center;
@@ -81,22 +77,15 @@
             font-size: 12px;
             border-bottom: 1px solid #f0f0f0;
         }
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-        .dropdown-item:active {
-            background-color: #f5f5f5;
-        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:active { background-color: #f5f5f5; }
 
-        /* POZYCJONOWANIE ETYKIET NA EKRANIE TELEFONU (Dopasowane do Twojego screena) */
-        
-        /* Punkt 1: LK Bolesławiec (Po lewej stronie ekranu) */
+        /* Dokładne dopasowanie pozycji przycisków na ekranie smartfona */
         #marker-boleslawiec {
             top: 48%;
             left: 28%;
         }
 
-        /* Punkt 2: SE Rokitnica / Gliwice (Po prawej stronie na dole) */
         #marker-rokitnica {
             top: 73%;
             left: 78%;
@@ -112,23 +101,21 @@
             <div class="marker-dropdown">
                 <a href="tel:533350594" class="dropdown-item">📞 Kierownik</a>
                 <a href="tel:+48000000000" class="dropdown-item">⛑️ Inspektor BHP</a>
-                <a href="https://www.google.com/maps/dir/?api=1&destination=51.287194,15.594056" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=51.287194,15.594056" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
             </div>
         </div>
-
 
         <div class="project-marker-overlay" id="marker-rokitnica">
             <div class="marker-trigger" onclick="toggleMarkerMenu(this)">📍 SE Rokitnica</div>
             <div class="marker-dropdown">
                 <a href="tel:+48600100200" class="dropdown-item">📞 Kierownik</a>
                 <a href="tel:+48700200300" class="dropdown-item">⛑️ Inspektor BHP</a>
-                <a href="https://www.google.com/maps/dir/?api=1&destination=50.320,18.650" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=50.320,18.650" target="_blank" class="dropdown-item" style="color: #007bff;">🚗 Nawiguj</a>
             </div>
         </div>
 
-
         <iframe 
-            src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxleFYqiakHP8wHw&ehbc=2E312F" 
+            src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw" 
             allowfullscreen="" 
             loading="eager">
         </iframe>
@@ -137,24 +124,20 @@
 
     <script>
         function toggleMarkerMenu(element) {
-            // Pobieramy główny kontener danej etykiety
             const parent = element.parentElement;
-            
-            // Sprawdzamy, czy to menu było już otwarte
             const isActive = parent.classList.contains('active');
             
-            // Zamykamy wszystkie inne otwarte menu, żeby nie robić bałaganu
+            // Zamykanie innych otwartych menu przed otwarciem obecnego
             document.querySelectorAll('.project-marker-overlay').forEach(el => {
                 el.classList.remove('active');
             });
             
-            // Jeśli nie było aktywne – otwieramy je
             if (!isActive) {
                 parent.classList.add('active');
             }
         }
 
-        // Zamknięcie menu po kliknięciu gdziekolwiek indziej na ekranie
+        // Zamknięcie rozwijanego menu po kliknięciu w dowolne inne miejsce na mapie
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.project-marker-overlay')) {
                 document.querySelectorAll('.project-marker-overlay').forEach(el => {
