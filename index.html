@@ -39,12 +39,11 @@
         }
 
         /* PANEL SZYBKIEGO KONTAKTU NA DOLE EKRANU */
-        /* To rozwiązanie gwarantuje, że przyciski nie zasłonią pinezek na mapie i są idealnie pod kciukiem */
         .bottom-contact-panel {
             background-color: #ffffff;
-            border-top: 2px solid #e41f1f; /* Czerwień firmowa ENPROM */
+            border-top: 3px solid #e41f1f; /* Czerwień firmowa ENPROM */
             padding: 10px 14px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
             z-index: 9999;
         }
 
@@ -63,8 +62,8 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 160px;
-            overflow-y: auto; /* W razie dodania kolejnych projektów, panel pozwoli na przewijanie */
+            max-height: 180px;
+            overflow-y: auto;
         }
 
         .project-card {
@@ -115,7 +114,7 @@
         }
 
         .action-button:active {
-            transform: scale(0.95);
+            transform: scale(0.94);
         }
 
         .btn-call {
@@ -135,14 +134,14 @@
         
         <div class="map-section">
             <iframe 
-                src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw&ehbc=2E312F" 
+                src="https://www.google.com/maps/d/embed?mid=1-2Vs42j6F7k_9QnRxlEfYqiakHP8wHw" 
                 allowfullscreen="" 
                 loading="eager">
             </iframe>
         </div>
 
         <div class="bottom-contact-panel">
-            <div class="panel-title">Szybkie menu budowy (Kliknij aby wybrać akcję)</div>
+            <div class="panel-title">Szybkie menu budowy (Wybierz akcję pod kciukiem)</div>
             
             <div class="projects-grid">
                 
@@ -153,18 +152,18 @@
                     </div>
                     <div class="btn-group">
                         <a href="tel:533350594" class="action-button btn-call">📞 Zadzwoń</a>
-                        <a href="https://www.google.com/maps/search/?api=1&query=51.2658553,15.5657397" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=51.2658553,15.5657397" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
                     </div>
                 </div>
 
                 <div class="project-card">
                     <div class="project-info">
                         <span class="project-name">SE Rokitnica</span>
-                        <span class="project-manager">Kierownik: Kontakt główny</span>
+                        <span class="project-manager">Kierownik: Kontakt Główny</span>
                     </div>
                     <div class="btn-group">
                         <a href="tel:+48600100200" class="action-button btn-call">📞 Zadzwoń</a>
-                        <a href="https://www.google.com/maps/search/?api=1&query=50.3664515,18.7917144" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=50.3664515,18.7917144" target="_blank" class="action-button btn-nav">🚗 Trasa</a>
                     </div>
                 </div>
 
