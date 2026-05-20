@@ -170,7 +170,7 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Generator ikon - usunięty problematyczny cień powodujący kwadraty
+        // Generator ikon
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
             if (typ === "SE") {
@@ -178,7 +178,7 @@
             }
             return L.icon({
                 iconUrl: url,
-                shadowUrl: '', // USUNIĘTE KWADRATY (brak cienia)
+                shadowUrl: '', // Brak cienia (brak czarnych kwadratów)
                 iconSize: [22, 36],
                 iconAnchor: [11, 36],
                 popupAnchor: [1, -30],
@@ -186,7 +186,7 @@
             });
         }
 
-        // Baza projektów ze zaktualizowanymi współrzędnymi dla Trębaczewa
+        // Baza punktów i projektów
         const projekty = [
             {
                 typ: "LN",           
@@ -311,13 +311,37 @@
                 status: "aktywne",   
                 nazwa: "LN Trębaczew",
                 etykieta: "Trębaczew",
-                lat: 50.4571478, // Dokładne współrzędne podane przez użytkownika
+                lat: 50.4571478, 
                 lng: 18.5353028, 
                 kierownikNazwa: "Krzysztof Stokłosa", 
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Jakub Gacek", 
                 telBhp: "+48000000000",
                 customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac"
+            },
+            {
+                typ: "LN",           
+                status: "aktywne",   
+                nazwa: "Magazyn Centralny",
+                etykieta: "Magazyn Centralny",
+                lat: 51.9420371, 
+                lng: 20.6014463, 
+                kierownikNazwa: "Arkadiusz Okrzeja", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Brak osoby", 
+                telBhp: ""
+            },
+            {
+                typ: "SE",           
+                status: "aktywne",   
+                nazwa: "Siedziba",
+                etykieta: "Siedziba",
+                lat: 52.1402252, 
+                lng: 21.0153614, 
+                kierownikNazwa: "Do uzupełnienia", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Szymon Wrona", 
+                telBhp: "+48000000000"
             }
         ];
 
