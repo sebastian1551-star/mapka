@@ -27,14 +27,14 @@
 
         /* POPUPY W KLIMACIE DARK MODE */
         .leaflet-popup-content-wrapper {
-            background: rgba(15, 15, 15, 0.95) !important;
-            border: 1px solid #333;
+            background: rgba(20, 20, 20, 0.98) !important;
+            border: 1px solid #444;
             border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
             padding: 4px;
             color: #fff;
         }
-        .leaflet-popup-tip { background: rgba(15, 15, 15, 0.95) !important; }
+        .leaflet-popup-tip { background: rgba(20, 20, 20, 0.98) !important; }
 
         .popup-container {
             text-align: center;
@@ -77,7 +77,6 @@
             cursor: pointer;
             border: none;
         }
-        .kierownik { background-color: #0056b3; }
         .btn-dodaj-punkt { background-color: #28a745; width: 100%; }
 
         .custom-tooltip {
@@ -104,8 +103,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            background: rgba(20, 20, 20, 0.95);
-            border: 1px solid #444;
+            background: rgba(25, 25, 25, 0.95);
+            border: 1px solid #555;
             color: #24ff56;
             padding: 14px 26px;
             border-radius: 25px;
@@ -126,9 +125,9 @@
             transform: translateX(-50%);
             width: 94%;
             max-width: 430px;
-            background: rgba(15, 15, 15, 0.98);
-            border: 1px solid #333;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+            background: rgba(20, 20, 20, 0.98);
+            border: 1px solid #444;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
             border-radius: 20px;
             padding: 14px;
             z-index: 1000;
@@ -149,48 +148,61 @@
             max-height: 260px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 10px;
-            padding: 2px;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 4px;
+            position: relative;
         }
 
-        /* PRZECIĄGANE KAFELKI TRASY */
+        /* CZYTELNIEJSZE KAFELKI Z OBSŁUGĄ DOTYKU */
         .route-tile {
             display: flex;
             align-items: center;
-            background: #222;
-            border: 1px solid #333;
+            background: #2a2a2a;
+            border: 1px solid #444;
             border-radius: 12px;
-            padding: 10px 14px;
-            gap: 10px;
-            cursor: grab;
+            padding: 12px 14px;
+            gap: 12px;
             user-select: none;
-            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            touch-action: none; /* Blokuje domyślny scroll ekranu podczas przeciągania */
         }
-        .route-tile:active { cursor: grabbing; }
+
+        /* Styl kafelka w trakcie przeciągania */
         .route-tile.dragging {
-            opacity: 0.4;
-            background-color: #333;
-            border: 1px dashed #6f42c1;
+            opacity: 0.9;
+            background-color: #3d2475;
+            border: 1px solid #9b5de5;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+            transform: scale(1.02);
+            z-index: 9999;
         }
 
         .tile-drag-handle {
-            color: #555;
-            font-size: 16px;
-            font-weight: bold;
+            color: #888;
+            font-size: 18px;
+            cursor: grab;
+            padding: 0 4px;
         }
 
         .tile-badge {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: bold;
-            background: #444;
-            padding: 3px 6px;
-            border-radius: 5px;
-            color: #fff;
+            background: #111;
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #24ff56;
+            border: 1px solid #333;
+            min-width: 35px;
+            text-align: center;
         }
+        
+        /* Wyróżnienie startu i mety */
+        .tile-badge.badge-start { color: #24ff56; border-color: #24ff56; }
+        .tile-badge.badge-meta { color: #ff4d4d; border-color: #ff4d4d; }
 
         .tile-name {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 600;
             color: #fff;
             flex-grow: 1;
@@ -203,12 +215,12 @@
             background: none;
             border: none;
             color: #ff4d4d;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 4px 8px;
         }
 
-        /* INTERFEJS WYBORU POCZĄTKOWEGO / DODAWANIA */
+        /* INTERFEJS WYBORU */
         .creator-options {
             display: flex;
             flex-direction: column;
@@ -217,7 +229,7 @@
         }
 
         .btn-creator-choice {
-            background: #222;
+            background: #2a2a2a;
             border: 1px solid #444;
             color: #fff;
             padding: 12px;
@@ -230,20 +242,19 @@
             align-items: center;
             gap: 10px;
         }
-        .btn-creator-choice:active { background: #333; }
+        .btn-creator-choice:active { background: #3a3a3a; }
 
-        /* PLUSIK DODAWANIA KOLEJNEGO PUNKTU */
         .btn-add-next-step {
             background: rgba(111, 66, 193, 0.2);
             border: 1px dashed #6f42c1;
-            color: #b814fd;
-            padding: 10px;
+            color: #c58eff;
+            padding: 12px;
             border-radius: 10px;
             font-size: 13px;
             font-weight: bold;
             cursor: pointer;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -474,23 +485,57 @@
             renderujTrase();
         }
 
-        // MECHANIZM PRZECIĄGANIA KAFELKÓW PALCEM (DRAG & DROP)
+        // NOWY, UNIWERSALNY SYSTEM DRAG & DROP (MYSZ + DOTYK NA TELEFONIE)
         function zainicjujDragAndDrop() {
             const container = document.getElementById('tiles-container');
             const tiles = container.querySelectorAll('.route-tile');
 
             tiles.forEach(tile => {
+                // OBSŁUGA MYSZKI (DESKTOP)
                 tile.addEventListener('dragstart', () => tile.classList.add('dragging'));
                 tile.addEventListener('dragend', () => {
                     tile.classList.remove('dragging');
                     przebudujTablicePoPrzeciagnieciu();
                 });
+
+                // OBSŁUGA DOTYKU (SMARTFONY)
+                tile.addEventListener('touchstart', (e) => {
+                    // Ignorujemy dotknięcie przycisku usuwania
+                    if (e.target.classList.contains('btn-tile-delete')) return;
+                    
+                    tile.classList.add('dragging');
+                    tile.style.position = 'relative';
+                }, { passive: true });
+
+                tile.addEventListener('touchmove', (e) => {
+                    const draggingTile = container.querySelector('.route-tile.dragging');
+                    if (!draggingTile) return;
+
+                    // Pobieramy pozycję palca na ekranie
+                    const touch = e.touches[0];
+                    const pozycjePoza = pobierzElementPozaPrzeciaganym(container, touch.clientY);
+
+                    if (pozycjePoza == null) {
+                        container.appendChild(draggingTile);
+                    } else {
+                        container.insertBefore(draggingTile, pozycjePoza);
+                    }
+                }, { passive: true });
+
+                tile.addEventListener('touchend', () => {
+                    if (tile.classList.contains('dragging')) {
+                        tile.classList.remove('dragging');
+                        przebudujTablicePoPrzeciagnieciu();
+                    }
+                });
             });
 
+            // Rejestracja dla klasycznego dragover na PC
             container.addEventListener('dragover', e => {
                 e.preventDefault();
-                const pozycjaPoza = pobierzElementPozaPrzeciaganym(container, e.clientY);
                 const draggingTile = document.querySelector('.dragging');
+                if (!draggingTile) return;
+                const pozycjaPoza = pobierzElementPozaPrzeciaganym(container, e.clientY);
                 if (pozycjaPoza == null) {
                     container.appendChild(draggingTile);
                 } else {
@@ -522,7 +567,28 @@
             });
 
             punktyTrasy = nowaKolejnosc;
-            renderujTrase(false); // Renderuj bez przeładowania HTML, aby nie psuć animacji
+            renderujTrase(false); // Aktualizuj mapę bez przeładowania bloków HTML (zapobiega miganiu)
+            renderujSameBadges(); // Odśwież tylko etykiety START/META/P1...
+        }
+
+        // Pomocnicza funkcja do szybkiej podmiany napisów START / META bez przebudowy drzewa DOM
+        function renderujSameBadges() {
+            const kafelki = document.querySelectorAll('.route-tile');
+            kafelki.forEach((tile, index) => {
+                const badge = tile.querySelector('.tile-badge');
+                if (badge) {
+                    badge.className = "tile-badge";
+                    if (index === 0) {
+                        badge.innerText = "START";
+                        badge.classList.add('badge-start');
+                    } else if (index === kafelki.length - 1 && kafelki.length > 1) {
+                        badge.innerText = "META";
+                        badge.classList.add('badge-meta');
+                    } else {
+                        badge.innerText = "P" + (index + 1);
+                    }
+                }
+            });
         }
 
         // RENDEROWANIE SYSTEMU
@@ -533,8 +599,9 @@
                 container.innerHTML = "";
                 punktyTrasy.forEach((punkt, index) => {
                     let etykieta = "P" + (index + 1);
-                    if (index === 0) etykieta = "START";
-                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) etykieta = "META";
+                    let dodatkowaKlasa = "";
+                    if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
+                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; dodatkowaKlasa = "badge-meta"; }
 
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
@@ -542,16 +609,15 @@
                     tile.setAttribute('data-id', punkt.id);
                     tile.innerHTML = `
                         <span class="tile-drag-handle">☰</span>
-                        <span class="tile-badge">${etykieta}</span>
+                        <span class="tile-badge ${dodatkowaKlasa}">${etykieta}</span>
                         <span class="tile-name">${punkt.nazwa}</span>
-                        <button class="btn-tile-delete" onclick="usunPunkt(${index})">❌</button>
+                        <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
                     `;
                     container.appendChild(tile);
                 });
                 zainicjujDragAndDrop();
             }
 
-            // Sterowanie widocznością kreatora i plusa
             if (punktyTrasy.length > 0) {
                 ukryjOpcjeKreatora();
             } else {
@@ -585,7 +651,6 @@
                         }
                     }).catch(() => distanceText.innerHTML = `⚠️ Błąd mapowania.`);
 
-                // Link Google Maps Multi-Destination
                 let origin = `${punktyTrasy[0].lat},${punktyTrasy[0].lng}`;
                 let destination = `${punktyTrasy[punktyTrasy.length - 1].lat},${punktyTrasy[punktyTrasy.length - 1].lng}`;
                 let waypoints = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
@@ -606,7 +671,6 @@
             document.getElementById('btn-trigger-plan').style.display = 'flex';
         }
 
-        // LOKALIZACJA GPS URZĄDZENIA
         let userMarker = null;
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(
