@@ -209,11 +209,11 @@
 
     <div id="map"></div>
 
-    <!-- DOLNY PANEL ROZBUDOWANEJ TRASY -->
+    <!-- DOLNY PANEL TRASY PO DROGACH -->
     <div id="route-panel">
         <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie...</div>
         <div class="panel-distance" id="route-distance">Odległość: -- km</div>
-        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz dłuższą trasę w Google Maps</a>
+        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz tę trasę w Google Maps</a>
         <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
     </div>
 
@@ -222,13 +222,11 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v4';
+                    const CACHE_NAME = 'enprom-map-v6';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-                        'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                        'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
+                        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
                     ];
                     self.addEventListener('install', e => {
                         e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
@@ -285,7 +283,6 @@
             { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Marta Pojasek", telBhp: "+48000000000" }
         ];
 
-        // Zmienne do obsługi trasy z punktem pośrednim
         let punktStart = null;
         let punktPrzejazd = null;
         let punktMeta = null;
@@ -339,7 +336,6 @@
             marker.bindPopup(popupContent);
         });
 
-        // REWOLUCJA W OBSŁUDZE TRASY (Z PUNKTEM POŚREDNIM)
         function ustawTrase(id, rola) {
             const projekt = projekty.find(p => p.id === id);
             if (!projekt) return;
@@ -352,13 +348,25 @@
             aktualizujPanelTrasy();
         }
 
+        // Pomocnicza funkcja do ładnego formatowania czasu przejazdu
+        function formatujCzas(sekundy) {
+            const minutyWszystkie = Math.round(sekundy / 60);
+            const godziny = Math.floor(minutyWszystkie / 60);
+            const minuty = minutyWszystkie % 60;
+            
+            if (godziny > 0) {
+                return `${godziny} godz. ${minuty} min`;
+            } else {
+                return `${minuty} min`;
+            }
+        }
+
         function aktualizujPanelTrasy() {
             const panel = document.getElementById('route-panel');
             const summary = document.getElementById('route-summary');
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
 
-            // Jeśli nie wybrano kompletnie nic, schowaj panel
             if (!punktStart && !punktPrzejazd && !punktMeta) {
                 panel.classList.remove('active');
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
@@ -377,37 +385,55 @@
                 <strong>Do:</strong> ${nazwaMeta}
             `;
 
-            // Przygotowanie punktów i rysowania linii na mapie Leaflet
-            if (liniaTrasy) map.removeLayer(liniaTrasy);
-            const punktyLinii = [];
-            let totalDystansMetry = 0;
+            const punktyTrasy = [];
+            if (punktStart) punktyTrasy.push(punktStart);
+            if (punktPrzejazd) punktyTrasy.push(punktPrzejazd);
+            if (punktMeta) punktyTrasy.push(punktMeta);
 
-            if (punktStart) punktyLinii.push(L.latLng(punktStart.lat, punktStart.lng));
-            if (punktPrzejazd) punktyLinii.push(L.latLng(punktPrzejazd.lat, punktPrzejazd.lng));
-            if (punktMeta) punktyLinii.push(L.latLng(punktMeta.lat, punktMeta.lng));
+            if (punktyTrasy.length >= 2) {
+                distanceText.innerHTML = `⏳ Kalkulacja trasy drogowej i czasu...`;
 
-            // Oblicz sumę odległości etapów
-            if (punktyLinii.length >= 2) {
-                for (let i = 0; i < punktyLinii.length - 1; i++) {
-                    totalDystansMetry += punktyLinii[i].distanceTo(punktyLinii[i+1]);
-                }
-                const dystansKm = (totalDystansMetry / 1000).toFixed(1);
-                distanceText.innerHTML = `📐 Łączna odległość (linia prosta): <strong>${dystansKm} km</strong>`;
-                
-                // Rysuj łamaną trasę na mapie
-                liniaTrasy = L.polyline(punktyLinii, { color: '#6f42c1', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+                const sklonowanePunkty = punktyTrasy.map(p => `${p.lng},${p.lat}`).join(';');
+                const urlOserem = `https://router.project-osrm.org/route/v1/driving/${sklonowanePunkty}?overview=full&geometries=geojson`;
+
+                fetch(urlOserem)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 'Ok' && data.routes.length > 0) {
+                            if (liniaTrasy) map.removeLayer(liniaTrasy);
+
+                            const trasaDrogowa = data.routes[0];
+                            const dystansKm = (trasaDrogowa.distance / 1000).toFixed(1);
+                            const czasPrzejazdu = formatujCzas(trasaDrogowa.duration); // OSRM zwraca czas w sekundach
+                            
+                            // Wyświetlamy dystans wraz z orientacyjnym czasem
+                            distanceText.innerHTML = `🚗 Droga: <strong>${dystansKm} km</strong> (ok. <strong>${czasPrzejazdu}</strong>)`;
+
+                            const koordynaty = trasaDrogowa.geometry.coordinates.map(c => [c[1], c[0]]);
+                            liniaTrasy = L.polyline(koordynaty, {
+                                color: '#6f42c1',
+                                weight: 5,
+                                opacity: 0.85
+                            }).addTo(map);
+
+                        } else {
+                            distanceText.innerHTML = `⚠️ Błąd wyznaczania dróg.`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        distanceText.innerHTML = `⚠️ Brak połączenia z serwerem dróg.`;
+                    });
             } else {
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
                 distanceText.innerHTML = `Wybierz kolejne punkty trasy...`;
             }
 
-            // BUDOWANIE LINKU DO GOOGLE MAPS Z PRZYSTANKIEM POŚREDNIM
             if (punktStart && punktMeta) {
                 let url = "";
                 if (punktPrzejazd) {
-                    // Trasa wielopunktowa ze startem, punktem pośrednim i końcem
                     url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&waypoints=${punktPrzejazd.lat},${punktPrzejazd.lng}&travelmode=driving`;
                 } else {
-                    // Klasyczna trasa od A do B
                     url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
                 }
                 googleLink.href = url;
