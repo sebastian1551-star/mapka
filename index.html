@@ -22,7 +22,6 @@
         #map {
             width: 100%;
             height: 100vh;
-            position: relative;
         }
 
         /* ZMNIEJSZONE NAPISY NA MAPIE */
@@ -38,7 +37,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             white-space: nowrap;
             transition: opacity 0.2s;
-            pointer-events: none; /* Zapobiega problemom z przeciąganiem markera */
         }
         
         .custom-tooltip::before {
@@ -142,42 +140,10 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* NOWE: STATYCZNE, SUBTELNE PRZYCISKI PŁYWAJĄCE NA MAPIE */
-        .map-floating-controls {
-            position: absolute;
-            top: 110px;
-            left: 10px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .btn-floating-shortcut {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(4px);
-            color: #333;
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            width: 34px;
-            height: 34px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-            transition: background 0.2s;
-        }
-
-        .btn-floating-shortcut:active {
-            background: rgba(230, 230, 230, 0.9);
-        }
-
-        /* DOLNY PANEL PLANOWANIA TRASY - ODCHUDZONY */
+        /* DOLNY PANEL PLANOWANIA TRASY - ZWIĘKSZONY WYMIAR NA SZYBKIE PRZYCISKI */
         #route-panel {
             position: absolute;
-            bottom: -220px;
+            bottom: -280px;
             left: 50%;
             transform: translateX(-50%);
             width: 92%;
@@ -214,6 +180,30 @@
             text-align: center;
         }
 
+        /* Sekcja szybkich skrótów startowych na dole */
+        .quick-start-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .btn-quick-start {
+            background: #e9ecef;
+            color: #333;
+            border: 1px solid #ced4da;
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-quick-start:active { background: #dee2e6; }
+
         .btn-go-route {
             background: #28a745;
             color: white;
@@ -241,15 +231,18 @@
 </head>
 <body>
 
-    <div id="map">
-        <div class="map-floating-controls">
-            <button class="btn-floating-shortcut" onclick="ustawStartGps()" title="Startuj z pozycji GPS">📍</button>
-            <button class="btn-floating-shortcut" onclick="ustawStartSiedziba()" title="Startuj z Siedziby">🏢</button>
-        </div>
-    </div>
+    <div id="map"></div>
 
+    <!-- ZMODYFIKOWANY DOLNY PANEL TRASY -->
     <div id="route-panel">
-        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie lub użyj bocznych ikon...</div>
+        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie lub użyj skrótów poniżej...</div>
+        
+        <!-- SZYBKIE PRZYCISKI STARTOWE -->
+        <div class="quick-start-box">
+            <button class="btn-quick-start" onclick="ustawStartGps()">📍 Start z pozycji GPS</button>
+            <button class="btn-quick-start" onclick="ustawStartSiedziba()">🏢 Start z Siedziby</button>
+        </div>
+
         <div class="panel-distance" id="route-distance">Odległość: -- km</div>
         <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz tę trasę w Google Maps</a>
         <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
@@ -260,7 +253,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v8';
+                    const CACHE_NAME = 'enprom-map-v7';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -361,28 +354,9 @@
                 </div>
             `;
 
-            // DODANO DRAGGABLE: TRUE DO WSZYSTKICH MARKERÓW PROJEKTÓW
             const marker = L.marker([projekt.lat, projekt.lng], {
-                icon: stworzIkone(projekt.typ, projekt.status),
-                draggable: true
+                icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
-
-            // OBSŁUGA PRZECIĄGANIA PALCEM (DRAG END)
-            marker.on('dragend', function(event) {
-                const nowyMarker = event.target;
-                const nowaPozycja = nowyMarker.getLatLng();
-                
-                // Aktualizujemy pozycję w obiekcie projektu
-                projekt.lat = nowaPozycja.lat;
-                projekt.lng = nowaPozycja.lng;
-                
-                // Jeśli ten projekt był wybrany w trasie, wymuszamy przeliczenie
-                if ((punktStart && punktStart.id === projekt.id) || 
-                    (punktPrzejazd && punktPrzejazd.id === projekt.id) || 
-                    (punktMeta && punktMeta.id === projekt.id)) {
-                    aktualizujPanelTrasy();
-                }
-            });
 
             const klasaTooltipu = projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip";
             const tekstTooltipu = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
@@ -394,19 +368,14 @@
             marker.bindPopup(popupContent);
         });
 
-        // SZYBKIE SKRÓTY STARTOWE (Z PANELU BOCZNEGO MAPY)
+        // SZYBKIE SKRÓTY STARTOWE
         function ustawStartGps() {
             if (aktualneWspolrzedneGps) {
                 punktStart = {
-                    id: "gps_static",
                     nazwa: "Twoja pozycja (GPS)",
                     lat: aktualneWspolrzedneGps.lat,
                     lng: aktualneWspolrzedneGps.lng
                 };
-                // Przenosimy marker usera (jeśli istnieje) w tryb przeciągalny, by można było nim ruszać
-                if (userMarker) {
-                    userMarker.dragging.enable();
-                }
                 aktualizujPanelTrasy();
             } else {
                 alert("Nie udało się jeszcze pobrać Twojej pozycji GPS. Upewnij się, że masz włączoną lokalizację w telefonie.");
@@ -414,6 +383,7 @@
         }
 
         function ustawStartSiedziba() {
+            // Szukamy Siedziby w bazie danych (id: 13)
             const siedziba = projekty.find(p => p.id === 13);
             if (siedziba) {
                 punktStart = siedziba;
@@ -446,6 +416,7 @@
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
 
+            // Pokazujemy panel zawsze, gdy cokolwiek zaczynamy planować
             if (!punktStart && !punktPrzejazd && !punktMeta) {
                 panel.classList.remove('active');
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
@@ -525,13 +496,10 @@
             punktStart = null;
             punktPrzejazd = null;
             punktMeta = null;
-            if (userMarker) {
-                userMarker.dragging.disable();
-            }
             aktualizujPanelTrasy();
         }
 
-        // GPS ŚLEDZENIE Z OPCJĄ PRZECIĄGANIA WŁASNEGO PUNKTU
+        // GPS ŚLEDZENIE Z ZAPISYWANIEM WSPÓŁRZĘDNYCH DO TRASY
         let userMarker = null;
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(
@@ -539,28 +507,16 @@
                     const uLat = position.coords.latitude;
                     const uLng = position.coords.longitude;
                     
+                    // Zapisujemy współrzędne globalnie, żeby przycisk "Z pozycji GPS" wiedział skąd ruszyć
                     aktualneWspolrzedneGps = { lat: uLat, lng: uLng };
+
                     const userIcon = L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
 
                     if (userMarker) {
-                        // Przesuwaj automatycznie tylko, jeśli użytkownik nim aktywnie nie rusza palcem
-                        if (!userMarker.dragging || !userMarker.dragging.moving()) {
-                            userMarker.setLatLng([uLat, uLng]);
-                        }
+                        userMarker.setLatLng([uLat, uLng]);
                     } else {
-                        // Tworzymy domyślnie zablokowany marker (odblokuje się po kliknięciu "Start z pozycji GPS")
                         userMarker = L.marker([uLat, uLng], { icon: userIcon }).addTo(map);
                         userMarker.bindTooltip("Twoja pozycja", { direction: 'top', className: 'custom-tooltip' });
-
-                        // Obsługa drag-drop dla własnej pozycji GPS
-                        userMarker.on('dragend', function(event) {
-                            const nowaPozycjaGps = event.target.getLatLng();
-                            if (punktStart && punktStart.id === "gps_static") {
-                                punktStart.lat = nowaPozycjaGps.lat;
-                                punktStart.lng = nowaPozycjaGps.lng;
-                                aktualizujPanelTrasy();
-                            }
-                        });
                     }
                 },
                 (error) => console.log("GPS Error: ", error.message),
