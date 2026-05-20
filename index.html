@@ -113,6 +113,21 @@
         .projekt-nieaktywny {
             opacity: 0.3 !important;
         }
+
+        /* STYLIZACJA IKONY AKTUALNEJ LOKALIZACJI UŻYTKOWNIKA */
+        .user-location-marker {
+            background: #007bff;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 123, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+        }
     </style>
 </head>
 <body>
@@ -171,7 +186,7 @@
             });
         }
 
-        // Baza projektów
+        // Baza projektów z dodanym projektem LN Trębaczew
         const projekty = [
             {
                 typ: "LN",           
@@ -290,13 +305,27 @@
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Brak osoby", 
                 telBhp: ""              
+            },
+            {
+                typ: "LN",           
+                status: "aktywne",   
+                nazwa: "LN Trębaczew",
+                etykieta: "Trębaczew",
+                lat: 51.1578, // Przybliżona koordynata dla Trębaczewa (używana głównie pod etykietę i marker)
+                lng: 18.8142, 
+                kierownikNazwa: "Krzysztof Stokłosa", 
+                telKierownik: "+48000000000",   
+                bhpNazwa: "Jakub Gacek", 
+                telBhp: "+48000000000",
+                customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac" // Wskazany dedykowany adres url
             }
         ];
 
         const punktyDoKadrowania = [];
 
         projekty.forEach(projekt => {
-            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
+            // Poprawiony zapis adresu URL w nawigacji
+            const googleMapsUrl = projekt.customUrl ? projekt.customUrl : `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
 
@@ -346,7 +375,45 @@
             marker.bindPopup(popupContent);
         });
 
-        // Dynamiczne dopasowanie widoku do wszystkich punktów
+        // DYNAMICZNE ŚLEDZENIE POŁOŻENIA UŻYTKOWNIKA (GPS)
+        let userMarker = null;
+
+        if (navigator.geolocation) {
+            // Funkcja sukcesu lokalizacji - wykonuje się przy każdej zmianie pozycji użytkownika
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const uLat = position.coords.latitude;
+                    const uLng = position.coords.longitude;
+
+                    const userIcon = L.divIcon({
+                        className: 'user-location-marker',
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+
+                    if (userMarker) {
+                        // Jeśli marker już istnieje, zaktualizuj jego pozycję
+                        userMarker.setLatLng([uLat, uLng]);
+                    } else {
+                        // Jeśli to pierwsze pobranie pozycji, stwórz marker użytkownika
+                        userMarker = L.marker([uLat, uLng], { icon: userIcon }).addTo(map);
+                        userMarker.bindTooltip("Twoja pozycja", { direction: 'top', className: 'custom-tooltip' });
+                    }
+                },
+                (error) => {
+                    console.log("Błąd lokalizacji GPS: ", error.message);
+                },
+                {
+                    enableHighAccuracy: true, // Zwiększona dokładność (GPS mobilny)
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.log("Geolokalizacja nie jest wspierana przez tę przeglądarkę.");
+        }
+
+        // Dynamiczne dopasowanie widoku początkowego do wszystkich punktów projektów
         if (punktyDoKadrowania.length > 0) {
             map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
         }
