@@ -140,10 +140,10 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* DOLNY PANEL PLANOWANIA TRASY */
+        /* DOLNY PANEL PLANOWANIA TRASY - ZWIĘKSZONY WYMIAR NA SZYBKIE PRZYCISKI */
         #route-panel {
             position: absolute;
-            bottom: -180px;
+            bottom: -280px;
             left: 50%;
             transform: translateX(-50%);
             width: 92%;
@@ -180,6 +180,30 @@
             text-align: center;
         }
 
+        /* Sekcja szybkich skrótów startowych na dole */
+        .quick-start-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .btn-quick-start {
+            background: #e9ecef;
+            color: #333;
+            border: 1px solid #ced4da;
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-quick-start:active { background: #dee2e6; }
+
         .btn-go-route {
             background: #28a745;
             color: white;
@@ -209,9 +233,16 @@
 
     <div id="map"></div>
 
-    <!-- DOLNY PANEL TRASY PO DROGACH -->
+    <!-- ZMODYFIKOWANY DOLNY PANEL TRASY -->
     <div id="route-panel">
-        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie...</div>
+        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie lub użyj skrótów poniżej...</div>
+        
+        <!-- SZYBKIE PRZYCISKI STARTOWE -->
+        <div class="quick-start-box">
+            <button class="btn-quick-start" onclick="ustawStartGps()">📍 Start z pozycji GPS</button>
+            <button class="btn-quick-start" onclick="ustawStartSiedziba()">🏢 Start z Siedziby</button>
+        </div>
+
         <div class="panel-distance" id="route-distance">Odległość: -- km</div>
         <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz tę trasę w Google Maps</a>
         <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
@@ -222,7 +253,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v6';
+                    const CACHE_NAME = 'enprom-map-v7';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -287,6 +318,7 @@
         let punktPrzejazd = null;
         let punktMeta = null;
         let liniaTrasy = null;
+        let aktualneWspolrzedneGps = null;
         const punktyDoKadrowania = [];
 
         projekty.forEach(projekt => {
@@ -336,6 +368,29 @@
             marker.bindPopup(popupContent);
         });
 
+        // SZYBKIE SKRÓTY STARTOWE
+        function ustawStartGps() {
+            if (aktualneWspolrzedneGps) {
+                punktStart = {
+                    nazwa: "Twoja pozycja (GPS)",
+                    lat: aktualneWspolrzedneGps.lat,
+                    lng: aktualneWspolrzedneGps.lng
+                };
+                aktualizujPanelTrasy();
+            } else {
+                alert("Nie udało się jeszcze pobrać Twojej pozycji GPS. Upewnij się, że masz włączoną lokalizację w telefonie.");
+            }
+        }
+
+        function ustawStartSiedziba() {
+            // Szukamy Siedziby w bazie danych (id: 13)
+            const siedziba = projekty.find(p => p.id === 13);
+            if (siedziba) {
+                punktStart = siedziba;
+                aktualizujPanelTrasy();
+            }
+        }
+
         function ustawTrase(id, rola) {
             const projekt = projekty.find(p => p.id === id);
             if (!projekt) return;
@@ -348,17 +403,11 @@
             aktualizujPanelTrasy();
         }
 
-        // Pomocnicza funkcja do ładnego formatowania czasu przejazdu
         function formatujCzas(sekundy) {
             const minutyWszystkie = Math.round(sekundy / 60);
             const godziny = Math.floor(minutyWszystkie / 60);
             const minuty = minutyWszystkie % 60;
-            
-            if (godziny > 0) {
-                return `${godziny} godz. ${minuty} min`;
-            } else {
-                return `${minuty} min`;
-            }
+            return godziny > 0 ? `${godziny} godz. ${minuty} min` : `${minuty} min`;
         }
 
         function aktualizujPanelTrasy() {
@@ -367,6 +416,7 @@
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
 
+            // Pokazujemy panel zawsze, gdy cokolwiek zaczynamy planować
             if (!punktStart && !punktPrzejazd && !punktMeta) {
                 panel.classList.remove('active');
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
@@ -404,9 +454,8 @@
 
                             const trasaDrogowa = data.routes[0];
                             const dystansKm = (trasaDrogowa.distance / 1000).toFixed(1);
-                            const czasPrzejazdu = formatujCzas(trasaDrogowa.duration); // OSRM zwraca czas w sekundach
+                            const czasPrzejazdu = formatujCzas(trasaDrogowa.duration);
                             
-                            // Wyświetlamy dystans wraz z orientacyjnym czasem
                             distanceText.innerHTML = `🚗 Droga: <strong>${dystansKm} km</strong> (ok. <strong>${czasPrzejazdu}</strong>)`;
 
                             const koordynaty = trasaDrogowa.geometry.coordinates.map(c => [c[1], c[0]]);
@@ -450,13 +499,17 @@
             aktualizujPanelTrasy();
         }
 
-        // GPS ŚLEDZENIE
+        // GPS ŚLEDZENIE Z ZAPISYWANIEM WSPÓŁRZĘDNYCH DO TRASY
         let userMarker = null;
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(
                 (position) => {
                     const uLat = position.coords.latitude;
                     const uLng = position.coords.longitude;
+                    
+                    // Zapisujemy współrzędne globalnie, żeby przycisk "Z pozycji GPS" wiedział skąd ruszyć
+                    aktualneWspolrzedneGps = { lat: uLat, lng: uLng };
+
                     const userIcon = L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
 
                     if (userMarker) {
