@@ -16,7 +16,7 @@
             height: 100%;
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f4f4; /* Jasne tło ładowania strony */
+            background-color: #f4f4f4;
         }
 
         #map {
@@ -83,7 +83,7 @@
             justify-content: center;
             gap: 6px;
             margin-top: 5px;
-            padding: 10px;
+            padding: 9px;
             color: white !important;
             text-decoration: none;
             font-weight: bold;
@@ -92,6 +92,8 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             transition: transform 0.1s ease;
             -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            border: none;
         }
 
         .popup-btn:active {
@@ -101,8 +103,17 @@
         .kierownik { background-color: #007bff; }
         .bhp { background-color: #28a745; }
         .nawiguj { background-color: #ffc107; color: #000 !important; }
+        
+        /* Przyciski planowania trasy */
+        .route-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 2px;
+        }
+        .btn-route-start { background-color: #6f42c1; font-size: 11px; padding: 7px; }
+        .btn-route-end { background-color: #fd7e14; font-size: 11px; padding: 7px; }
 
-        /* Styl dla zablokowanego przycisku BHP (brak osoby) */
         .popup-btn.disabled {
             background-color: #6c757d;
             pointer-events: none;
@@ -110,12 +121,10 @@
             box-shadow: none;
         }
 
-        /* STYL DLA PROJEKTÓW NIEAKTYWNYCH (PRZEZROCZYSTOŚĆ) */
         .projekt-nieaktywny {
             opacity: 0.3 !important;
         }
 
-        /* STYLIZACJA IKONY AKTUALNEJ LOKALIZACJI UŻYTKOWNIKA */
         .user-location-marker {
             background: #007bff;
             border: 3px solid #fff;
@@ -129,18 +138,89 @@
             70% { box-shadow: 0 0 0 15px rgba(0, 123, 255, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
+
+        /* DOLNY PANEL PLANOWANIA TRASY */
+        #route-panel {
+            position: absolute;
+            bottom: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+            border-radius: 16px;
+            padding: 14px;
+            z-index: 1000;
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-sizing: border-box;
+        }
+
+        #route-panel.active {
+            bottom: 20px;
+        }
+
+        .panel-text {
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .panel-distance {
+            font-size: 14px;
+            font-weight: bold;
+            color: #6f42c1;
+            margin-bottom: 10px;
+            background: #f1f0f7;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .btn-go-route {
+            background: #28a745;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-decoration: none;
+            display: block;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-clear-route {
+            background: none;
+            border: none;
+            color: #dc3545;
+            font-size: 11px;
+            margin-top: 8px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 
     <div id="map"></div>
 
+    <!-- DOLNY PANEL TRASY -->
+    <div id="route-panel">
+        <div class="panel-text" id="route-summary">Wybierz punkt startowy i końcowy...</div>
+        <div class="panel-distance" id="route-distance">Odległość: -- km</div>
+        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz trasę w Google Maps</a>
+        <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
+    </div>
+
     <script>
         // Cache offline
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v2';
+                    const CACHE_NAME = 'enprom-map-v3';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -162,16 +242,13 @@
         }
 
         // Inicjalizacja mapy
-        const map = L.map('map', {
-            zoomSnap: 0.5
-        });
+        const map = L.map('map', { zoomSnap: 0.5 });
 
-        // JASNY PODKŁAD MAPY (CartoDB Positron)
+        // JASNY PODKŁAD MAPY
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Generator ikon
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
             if (typ === "SE") {
@@ -189,209 +266,58 @@
 
         // Baza punktów i projektów
         const projekty = [
-            {
-                typ: "LN",           
-                status: "aktywne",   
-                nazwa: "110 KV Bolesławiec - Świętoszów",
-                etykieta: "244312 Bolesławiec",
-                lat: 51.287194,  
-                lng: 15.594056,  
-                kierownikNazwa: "Filip Correia",
-                telKierownik: "+48533350594",     
-            },
-            {
-                typ: "SE",           
-                status: "aktywne",   
-                nazwa: "SE 400/110 kV Rokitnica",
-                etykieta: "245165 Rokitnica",
-                lat: 50.372361,      
-                lng: 18.771306,      
-                kierownikNazwa: "Michał Baliński", 
-                telKierownik: "+48509721633",   
-                bhpNazwa: "Joanna Wójcikiewicz",      
-                telBhp: "+48798411926",    
-            },
-            {
-                typ: "LN",           
-                status: "aktywne",   
-                nazwa: "Linia 110/220 kV CPK",
-                etykieta: "CPK",
-                lat: 52.209911,      
-                lng: 20.475766,      
-                kierownikNazwa: "Joanna Nowicka", 
-                telKierownik: "+48533350557",   
-                bhpNazwa: "Brak osoby", 
-                telBhp: ""              
-            },
-            {
-                typ: "SE",           
-                status: "aktywne",   
-                nazwa: "SE Leszno",
-                etykieta: "Leszno",
-                lat: 51.877000,      
-                lng: 16.589056,      
-                kierownikNazwa: "Maciej Waszak", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Rafał Rawecki", 
-                telBhp: "+48000000000"              
-            },
-            {
-                typ: "SE",           
-                status: "aktywne",   
-                nazwa: "SE Polkowice",
-                etykieta: "Polkowice",
-                lat: 51.496195,      
-                lng: 16.073803,      
-                kierownikNazwa: "Łukasz Turchan", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Arkadiusz Wieczorek", 
-                telBhp: "+48000000000"              
-            },
-            {
-                typ: "LN",           
-                status: "nieaktywne",   
-                nazwa: "Linia 110 kV Radzyń - Łuków",
-                etykieta: "Radzyń",
-                lat: 51.777073,      
-                lng: 22.622897,      
-                kierownikNazwa: "Patryk Trojanowski", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Brak osoby", 
-                telBhp: ""              
-            },
-            {
-                typ: "UW",           
-                status: "aktywne",   
-                nazwa: "UW Siebenbäumen (Siedenbrunzow)",
-                etykieta: "Siebenbrunzow",
-                lat: 53.907861,      
-                lng: 13.144389,      
-                kierownikNazwa: "Do uzupełnienia", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Do uzupełnienia", 
-                telBhp: "+48000000000"              
-            },
-            {
-                typ: "UW",           
-                status: "nieaktywne",   
-                nazwa: "UW Semlin",
-                etykieta: "Semlin",
-                lat: 53.147361,      
-                lng: 11.758278,      
-                kierownikNazwa: "Aleksander Jarkow", // Zaktualizowano kierownika
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Do uzupełnienia", 
-                telBhp: "+48000000000"              
-            },
-            {
-                typ: "UW",           
-                status: "aktywne",   
-                nazwa: "UW Jesow",
-                etykieta: "Jesow",
-                lat: 53.389861,      
-                lng: 11.016417,      
-                kierownikNazwa: "Do uzupełnienia", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Do uzupełnienia", 
-                telBhp: "+48000000000"              
-            },
-            {
-                typ: "LN",           
-                status: "aktywne",   
-                nazwa: "LN Demon Munstenberg",
-                etykieta: "Munstenberg",
-                lat: 52.597977,      
-                lng: 13.623709,      
-                kierownikNazwa: "Marcin Gralak", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Brak osoby", 
-                telBhp: ""              
-            },
-            {
-                typ: "LN",           
-                status: "aktywne",   
-                nazwa: "LN Trębaczew",
-                etykieta: "Trębaczew",
-                lat: 50.4571478, 
-                lng: 18.5353028, 
-                kierownikNazwa: "Krzysztof Stokłosa", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Jakub Gacek", 
-                telBhp: "+48000000000",
-                customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac"
-            },
-            {
-                typ: "LN",           
-                status: "staly",   // Nowy status stały
-                nazwa: "Magazyn Centralny",
-                etykieta: "Magazyn Centralny",
-                lat: 51.9420371, 
-                lng: 20.6014463, 
-                kierownikNazwa: "Arkadiusz Okrzeja", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Brak osoby", 
-                telBhp: ""
-            },
-            {
-                typ: "SE",           
-                status: "staly",   // Nowy status stały
-                nazwa: "Siedziba",
-                etykieta: "Siedziba",
-                lat: 52.1402252, 
-                lng: 21.0153614, 
-                kierownikNazwa: "Do uzupełnienia", 
-                telKierownik: "+48000000000",   
-                bhpNazwa: "Szymon Wrona", 
-                telBhp: "+48000000000"
-            }
+            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownikNazwa: "Filip Correia", telKierownik: "+48533350594" },
+            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownikNazwa: "Michał Baliński", telKierownik: "+48509721633", bhpNazwa: "Joanna Wójcikiewicz", telBhp: "+48798411926" },
+            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownikNazwa: "Joanna Nowicka", telKierownik: "+48533350557", bhpNazwa: "Brak osoby", telBhp: "" },
+            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownikNazwa: "Maciej Waszak", telKierownik: "+48000000000", bhpNazwa: "Rafał Rawecki", telBhp: "+48000000000" },
+            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownikNazwa: "Łukasz Turchan", telKierownik: "+48000000000", bhpNazwa: "Arkadiusz Wieczorek", telBhp: "+48000000000" },
+            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownikNazwa: "Patryk Trojanowski", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
+            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
+            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278, kierownikNazwa: "Aleksander Jarkow", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
+            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
+            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709, kierownikNazwa: "Marcin Gralak", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
+            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownikNazwa: "Krzysztof Stokłosa", telKierownik: "+48000000000", bhpNazwa: "Jakub Gacek", telBhp: "+48000000000", customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac" },
+            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownikNazwa: "Arkadiusz Okrzeja", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
+            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Szymon Wrona", telBhp: "+48000000000" },
+            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownikNazwa: "Tomasz Nyszk", telKierownik: "+48000000000", bhpNazwa: "Daniel Riopka", telBhp: "+48000000000" },
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Marta Pojasek", telBhp: "+48000000000" }
         ];
 
+        // Zmienne do obsługi trasy
+        let punktStart = null;
+        let punktMeta = null;
+        let liniaTrasy = null;
         const punktyDoKadrowania = [];
 
         projekty.forEach(projekt => {
             const googleMapsUrl = projekt.customUrl ? projekt.customUrl : `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             
-            // Warunki przypisania etykiet tekstowych statusu
             let statusTekst = "";
             let statusKlasa = "";
-            
-            if (projekt.status === "staly") {
-                statusTekst = "📌 PUNKT STAŁY";
-                statusKlasa = "status-staly";
-            } else if (projekt.status === "aktywne") {
-                statusTekst = "🟢 W REALIZACJI";
-                statusKlasa = "status-aktywne";
-            } else {
-                statusTekst = "⚠️ UKOŃCZONO";
-                statusKlasa = "status-nieaktywne";
-            }
+            if (projekt.status === "staly") { statusTekst = "📌 PUNKT STAŁY"; statusKlasa = "status-staly"; }
+            else if (projekt.status === "aktywne") { statusTekst = "🟢 W REALIZACJI"; statusKlasa = "status-aktywne"; }
+            else { statusTekst = "⚠️ UKOŃCZONO"; statusKlasa = "status-nieaktywne"; }
 
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
-            let bhpButtonHtml = '';
-            if (projekt.bhpNazwa === "Brak osoby" || !projekt.telBhp) {
-                bhpButtonHtml = `<div class="popup-btn bhp disabled">⛑️ BHP: Brak osoby</div>`;
-            } else {
-                bhpButtonHtml = `
-                    <a href="tel:${projekt.telBhp}" class="popup-btn bhp">
-                        ⛑️ BHP: ${projekt.bhpNazwa}
-                    </a>`;
-            }
+            let bhpButtonHtml = (projekt.bhpNazwa === "Brak osoby" || !projekt.telBhp) 
+                ? `<div class="popup-btn bhp disabled">⛑️ BHP: Brak osoby</div>` 
+                : `<a href="tel:${projekt.telBhp}" class="popup-btn bhp">⛑️ BHP: ${projekt.bhpNazwa}</a>`;
 
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     <div class="status-badge ${statusKlasa}">${statusTekst}</div>
                     
-                    <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">
-                        📞 Kier. ${projekt.kierownikNazwa}
-                    </a>
-                    
+                    <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">📞 Kier. ${projekt.kierownikNazwa}</a>
                     ${bhpButtonHtml}
                     
-                    <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">
-                        🚗 Nawiguj w Google Maps
-                    </a>
+                    <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">🚗 Jeden punkt (Google Maps)</a>
+                    
+                    <div class="route-grid">
+                        <button class="popup-btn btn-route-start" onclick="ustawTrase(${projekt.id}, 'start')">📍 START</button>
+                        <button class="popup-btn btn-route-end" onclick="ustawTrase(${projekt.id}, 'meta')">🏁 META</button>
+                    </div>
                 </div>
             `;
 
@@ -400,34 +326,82 @@
             }).addTo(map);
 
             const klasaTooltipu = projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip";
-
-            // Dla punktów stałych pomijamy przedrostek typu (np. LN: czy SE:) i dajemy samą czystą nazwę
-            const tekstTooltipu = projekt.status === "staly" ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
+            const tekstTooltipu = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
 
             marker.bindTooltip(tekstTooltipu, {
-                permanent: true, 
-                direction: 'top',
-                className: klasaTooltipu,
-                offset: [0, -6]
+                permanent: true, direction: 'top', className: klasaTooltipu, offset: [0, -6]
             });
 
             marker.bindPopup(popupContent);
         });
 
-        // DYNAMICZNE ŚLEDZENIE POŁOŻENIA UŻYTKOWNIKA (GPS)
-        let userMarker = null;
+        // LOGIKA PLANOWANIA TRASY
+        function ustawTrase(id, rola) {
+            const projekt = projekty.find(p => p.id === id);
+            if (!projekt) return;
 
+            if (rola === 'start') punktStart = projekt;
+            if (rola === 'meta') punktMeta = projekt;
+
+            map.closePopup(); // Zamknij popup po kliknięciu wyboru
+            aktualizujPanelTrasy();
+        }
+
+        function aktualizujPanelTrasy() {
+            const panel = document.getElementById('route-panel');
+            const summary = document.getElementById('route-summary');
+            const distanceText = document.getElementById('route-distance');
+            const googleLink = document.getElementById('btn-google-maps');
+
+            if (!punktStart && !punktMeta) {
+                panel.classList.remove('active');
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
+                return;
+            }
+
+            panel.classList.add('active');
+
+            const nazwaStart = punktStart ? punktStart.nazwa : "???";
+            const nazwaMeta = punktMeta ? punktMeta.nazwa : "???";
+            summary.innerHTML = `<strong>Z:</strong> ${nazwaStart}<br><strong>Do:</strong> ${nazwaMeta}`;
+
+            if (punktStart && punktMeta) {
+                // Oblicz odległość w linii prostej na mapie
+                const p1 = L.latLng(punktStart.lat, punktStart.lng);
+                const p2 = L.latLng(punktMeta.lat, punktMeta.lng);
+                const dystansMetry = p1.distanceTo(p2);
+                const dystansKm = (dystansMetry / 1000).toFixed(1);
+
+                distanceText.innerHTML = `📐 Odległość (w linii prostej): <strong>${dystansKm} km</strong>`;
+
+                // Rysowanie wizualnej linii łączącej projekty na mapie
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
+                liniaTrasy = L.polyline([p1, p2], { color: '#6f42c1', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+                
+                // Link do nawigacji drogowej Google Maps
+                googleLink.href = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
+                googleLink.style.display = "block";
+            } else {
+                distanceText.innerHTML = `Wybierz drugi punkt, aby poznać odległość...`;
+                googleLink.style.display = "none";
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
+            }
+        }
+
+        function wyczyscTrase() {
+            punktStart = null;
+            punktMeta = null;
+            aktualizujPanelTrasy();
+        }
+
+        // GPS ŚLEDZENIE
+        let userMarker = null;
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(
                 (position) => {
                     const uLat = position.coords.latitude;
                     const uLng = position.coords.longitude;
-
-                    const userIcon = L.divIcon({
-                        className: 'user-location-marker',
-                        iconSize: [14, 14],
-                        iconAnchor: [7, 7]
-                    });
+                    const userIcon = L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
 
                     if (userMarker) {
                         userMarker.setLatLng([uLat, uLng]);
@@ -436,24 +410,14 @@
                         userMarker.bindTooltip("Twoja pozycja", { direction: 'top', className: 'custom-tooltip' });
                     }
                 },
-                (error) => {
-                    console.log("Błąd lokalizacji GPS: ", error.message);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+                (error) => console.log("GPS Error: ", error.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
-        } else {
-            console.log("Geolokalizacja nie jest wspierana przez tę przeglądarkę.");
         }
 
-        // Dynamiczne dopasowanie widoku początkowego do wszystkich punktów projektów
         if (punktyDoKadrowania.length > 0) {
             map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
         }
     </script>
-
 </body>
 </html>
