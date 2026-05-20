@@ -53,7 +53,7 @@
 
         .popup-container {
             text-align: center;
-            min-width: 210px;
+            min-width: 220px;
         }
 
         .popup-title {
@@ -104,15 +104,16 @@
         .bhp { background-color: #28a745; }
         .nawiguj { background-color: #ffc107; color: #000 !important; }
         
-        /* Przyciski planowania trasy */
+        /* Przyciski rozbudowanego planowania trasy (3 kolumny) */
         .route-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 4px;
-            margin-top: 2px;
+            margin-top: 4px;
         }
-        .btn-route-start { background-color: #6f42c1; font-size: 11px; padding: 7px; }
-        .btn-route-end { background-color: #fd7e14; font-size: 11px; padding: 7px; }
+        .btn-route-start { background-color: #6f42c1; font-size: 10px; padding: 6px 2px; }
+        .btn-route-via { background-color: #b814fd; font-size: 10px; padding: 6px 2px; }
+        .btn-route-end { background-color: #fd7e14; font-size: 10px; padding: 6px 2px; }
 
         .popup-btn.disabled {
             background-color: #6c757d;
@@ -142,14 +143,14 @@
         /* DOLNY PANEL PLANOWANIA TRASY */
         #route-panel {
             position: absolute;
-            bottom: -150px;
+            bottom: -180px;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            background: rgba(255, 255, 255, 0.95);
+            width: 92%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(8px);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.25);
             border-radius: 16px;
             padding: 14px;
             z-index: 1000;
@@ -162,14 +163,14 @@
         }
 
         .panel-text {
-            font-size: 12px;
+            font-size: 11px;
             color: #333;
             margin-bottom: 8px;
             line-height: 1.4;
         }
 
         .panel-distance {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #6f42c1;
             margin-bottom: 10px;
@@ -183,12 +184,13 @@
             background: #28a745;
             color: white;
             text-align: center;
-            padding: 12px;
+            padding: 11px;
             border-radius: 10px;
             font-weight: bold;
             text-decoration: none;
             display: block;
             box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            font-size: 13px;
         }
         
         .btn-clear-route {
@@ -196,7 +198,7 @@
             border: none;
             color: #dc3545;
             font-size: 11px;
-            margin-top: 8px;
+            margin-top: 6px;
             width: 100%;
             cursor: pointer;
             font-weight: 500;
@@ -207,11 +209,11 @@
 
     <div id="map"></div>
 
-    <!-- DOLNY PANEL TRASY -->
+    <!-- DOLNY PANEL ROZBUDOWANEJ TRASY -->
     <div id="route-panel">
-        <div class="panel-text" id="route-summary">Wybierz punkt startowy i końcowy...</div>
+        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie...</div>
         <div class="panel-distance" id="route-distance">Odległość: -- km</div>
-        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz trasę w Google Maps</a>
+        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz dłuższą trasę w Google Maps</a>
         <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
     </div>
 
@@ -220,7 +222,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v3';
+                    const CACHE_NAME = 'enprom-map-v4';
                     const ASSETS = [
                         '/',
                         'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -283,8 +285,9 @@
             { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Marta Pojasek", telBhp: "+48000000000" }
         ];
 
-        // Zmienne do obsługi trasy
+        // Zmienne do obsługi trasy z punktem pośrednim
         let punktStart = null;
+        let punktPrzejazd = null;
         let punktMeta = null;
         let liniaTrasy = null;
         const punktyDoKadrowania = [];
@@ -316,6 +319,7 @@
                     
                     <div class="route-grid">
                         <button class="popup-btn btn-route-start" onclick="ustawTrase(${projekt.id}, 'start')">📍 START</button>
+                        <button class="popup-btn btn-route-via" onclick="ustawTrase(${projekt.id}, 'via')">🔄 PRZEJAZD</button>
                         <button class="popup-btn btn-route-end" onclick="ustawTrase(${projekt.id}, 'meta')">🏁 META</button>
                     </div>
                 </div>
@@ -335,15 +339,16 @@
             marker.bindPopup(popupContent);
         });
 
-        // LOGIKA PLANOWANIA TRASY
+        // REWOLUCJA W OBSŁUDZE TRASY (Z PUNKTEM POŚREDNIM)
         function ustawTrase(id, rola) {
             const projekt = projekty.find(p => p.id === id);
             if (!projekt) return;
 
             if (rola === 'start') punktStart = projekt;
+            if (rola === 'via') punktPrzejazd = projekt;
             if (rola === 'meta') punktMeta = projekt;
 
-            map.closePopup(); // Zamknij popup po kliknięciu wyboru
+            map.closePopup();
             aktualizujPanelTrasy();
         }
 
@@ -353,7 +358,8 @@
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
 
-            if (!punktStart && !punktMeta) {
+            // Jeśli nie wybrano kompletnie nic, schowaj panel
+            if (!punktStart && !punktPrzejazd && !punktMeta) {
                 panel.classList.remove('active');
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
                 return;
@@ -362,34 +368,58 @@
             panel.classList.add('active');
 
             const nazwaStart = punktStart ? punktStart.nazwa : "???";
+            const nazwaVia = punktPrzejazd ? punktPrzejazd.nazwa : "(brak)";
             const nazwaMeta = punktMeta ? punktMeta.nazwa : "???";
-            summary.innerHTML = `<strong>Z:</strong> ${nazwaStart}<br><strong>Do:</strong> ${nazwaMeta}`;
 
-            if (punktStart && punktMeta) {
-                // Oblicz odległość w linii prostej na mapie
-                const p1 = L.latLng(punktStart.lat, punktStart.lng);
-                const p2 = L.latLng(punktMeta.lat, punktMeta.lng);
-                const dystansMetry = p1.distanceTo(p2);
-                const dystansKm = (dystansMetry / 1000).toFixed(1);
+            summary.innerHTML = `
+                <strong>Z:</strong> ${nazwaStart}<br>
+                ${punktPrzejazd ? `<strong>Przez:</strong> ${nazwaVia}<br>` : ''}
+                <strong>Do:</strong> ${nazwaMeta}
+            `;
 
-                distanceText.innerHTML = `📐 Odległość (w linii prostej): <strong>${dystansKm} km</strong>`;
+            // Przygotowanie punktów i rysowania linii na mapie Leaflet
+            if (liniaTrasy) map.removeLayer(liniaTrasy);
+            const punktyLinii = [];
+            let totalDystansMetry = 0;
 
-                // Rysowanie wizualnej linii łączącej projekty na mapie
-                if (liniaTrasy) map.removeLayer(liniaTrasy);
-                liniaTrasy = L.polyline([p1, p2], { color: '#6f42c1', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+            if (punktStart) punktyLinii.push(L.latLng(punktStart.lat, punktStart.lng));
+            if (punktPrzejazd) punktyLinii.push(L.latLng(punktPrzejazd.lat, punktPrzejazd.lng));
+            if (punktMeta) punktyLinii.push(L.latLng(punktMeta.lat, punktMeta.lng));
+
+            // Oblicz sumę odległości etapów
+            if (punktyLinii.length >= 2) {
+                for (let i = 0; i < punktyLinii.length - 1; i++) {
+                    totalDystansMetry += punktyLinii[i].distanceTo(punktyLinii[i+1]);
+                }
+                const dystansKm = (totalDystansMetry / 1000).toFixed(1);
+                distanceText.innerHTML = `📐 Łączna odległość (linia prosta): <strong>${dystansKm} km</strong>`;
                 
-                // Link do nawigacji drogowej Google Maps
-                googleLink.href = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
+                // Rysuj łamaną trasę na mapie
+                liniaTrasy = L.polyline(punktyLinii, { color: '#6f42c1', weight: 4, dashArray: '5, 10', opacity: 0.8 }).addTo(map);
+            } else {
+                distanceText.innerHTML = `Wybierz kolejne punkty trasy...`;
+            }
+
+            // BUDOWANIE LINKU DO GOOGLE MAPS Z PRZYSTANKIEM POŚREDNIM
+            if (punktStart && punktMeta) {
+                let url = "";
+                if (punktPrzejazd) {
+                    // Trasa wielopunktowa ze startem, punktem pośrednim i końcem
+                    url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&waypoints=${punktPrzejazd.lat},${punktPrzejazd.lng}&travelmode=driving`;
+                } else {
+                    // Klasyczna trasa od A do B
+                    url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
+                }
+                googleLink.href = url;
                 googleLink.style.display = "block";
             } else {
-                distanceText.innerHTML = `Wybierz drugi punkt, aby poznać odległość...`;
                 googleLink.style.display = "none";
-                if (liniaTrasy) map.removeLayer(liniaTrasy);
             }
         }
 
         function wyczyscTrase() {
             punktStart = null;
+            punktPrzejazd = null;
             punktMeta = null;
             aktualizujPanelTrasy();
         }
