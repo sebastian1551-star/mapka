@@ -16,7 +16,7 @@
             height: 100%;
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
+            background-color: #242424; /* Lekko jaśniejsze tło ładowania strony */
         }
 
         #map {
@@ -165,7 +165,7 @@
             zoomSnap: 0.5
         });
 
-        // Ciemny podkład mapy
+        // JAŚNIEJSZY podkład mapy (CartoDB Dark Matter Lite)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
@@ -186,7 +186,7 @@
             });
         }
 
-        // Baza projektów z dodanym projektem LN Trębaczew
+        // Baza projektów ze zaktualizowanymi współrzędnymi dla Trębaczewa
         const projekty = [
             {
                 typ: "LN",           
@@ -311,20 +311,19 @@
                 status: "aktywne",   
                 nazwa: "LN Trębaczew",
                 etykieta: "Trębaczew",
-                lat: 51.1578, // Przybliżona koordynata dla Trębaczewa (używana głównie pod etykietę i marker)
-                lng: 18.8142, 
+                lat: 50.4571478, // Dokładne współrzędne podane przez użytkownika
+                lng: 18.5353028, 
                 kierownikNazwa: "Krzysztof Stokłosa", 
                 telKierownik: "+48000000000",   
                 bhpNazwa: "Jakub Gacek", 
                 telBhp: "+48000000000",
-                customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac" // Wskazany dedykowany adres url
+                customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac"
             }
         ];
 
         const punktyDoKadrowania = [];
 
         projekty.forEach(projekt => {
-            // Poprawiony zapis adresu URL w nawigacji
             const googleMapsUrl = projekt.customUrl ? projekt.customUrl : `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             const statusTekst = projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO";
             const statusKlasa = projekt.status === "aktywne" ? "status-aktywne" : "status-nieaktywne";
@@ -362,7 +361,6 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Jeśli projekt jest nieaktywny, dodajemy klasę przezroczystości również do etykiety tekstowej
             const klasaTooltipu = projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip";
 
             marker.bindTooltip(`${projekt.typ}: ${projekt.etykieta}`, {
@@ -379,7 +377,6 @@
         let userMarker = null;
 
         if (navigator.geolocation) {
-            // Funkcja sukcesu lokalizacji - wykonuje się przy każdej zmianie pozycji użytkownika
             navigator.geolocation.watchPosition(
                 (position) => {
                     const uLat = position.coords.latitude;
@@ -392,10 +389,8 @@
                     });
 
                     if (userMarker) {
-                        // Jeśli marker już istnieje, zaktualizuj jego pozycję
                         userMarker.setLatLng([uLat, uLng]);
                     } else {
-                        // Jeśli to pierwsze pobranie pozycji, stwórz marker użytkownika
                         userMarker = L.marker([uLat, uLng], { icon: userIcon }).addTo(map);
                         userMarker.bindTooltip("Twoja pozycja", { direction: 'top', className: 'custom-tooltip' });
                     }
@@ -404,7 +399,7 @@
                     console.log("Błąd lokalizacji GPS: ", error.message);
                 },
                 {
-                    enableHighAccuracy: true, // Zwiększona dokładność (GPS mobilny)
+                    enableHighAccuracy: true,
                     timeout: 10000,
                     maximumAge: 0
                 }
