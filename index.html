@@ -22,6 +22,7 @@
         #map {
             width: 100%;
             height: 100vh;
+            position: relative;
         }
 
         /* ZMNIEJSZONE NAPISY NA MAPIE */
@@ -37,13 +38,14 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             white-space: nowrap;
             transition: opacity 0.2s;
+            pointer-events: none;
         }
         
         .custom-tooltip::before {
             border-top-color: rgba(30, 30, 30, 0.85) !important;
         }
 
-        /* Stylizacja okienka akcji po kliknięciu */
+        /* Stylizacja okienka akcji */
         .leaflet-popup-content-wrapper {
             background: rgba(255, 255, 255, 0.98);
             border-radius: 14px;
@@ -76,7 +78,6 @@
         .status-nieaktywne { background-color: #ffebee; color: #c62828; }
         .status-staly { background-color: #f0f0f0; color: #495057; border: 1px solid #ced4da; }
 
-        /* Przyciski dopasowane do wygodnego klikania kciukiem */
         .popup-btn {
             display: flex;
             align-items: center;
@@ -96,15 +97,11 @@
             border: none;
         }
 
-        .popup-btn:active {
-            transform: scale(0.96);
-        }
-
+        .popup-btn:active { transform: scale(0.96); }
         .kierownik { background-color: #007bff; }
         .bhp { background-color: #28a745; }
         .nawiguj { background-color: #ffc107; color: #000 !important; }
         
-        /* Przyciski rozbudowanego planowania trasy (3 kolumny) */
         .route-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -122,9 +119,7 @@
             box-shadow: none;
         }
 
-        .projekt-nieaktywny {
-            opacity: 0.3 !important;
-        }
+        .projekt-nieaktywny { opacity: 0.3 !important; }
 
         .user-location-marker {
             background: #007bff;
@@ -140,80 +135,151 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
         }
 
-        /* DOLNY PANEL PLANOWANIA TRASY - ZWIĘKSZONY WYMIAR NA SZYBKIE PRZYCISKI */
-        #route-panel {
+        /* SUBTELNE PRZYCISKI SKRÓTÓW NA MAPIE */
+        .map-floating-controls {
             position: absolute;
-            bottom: -280px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 92%;
-            max-width: 420px;
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(8px);
-            box-shadow: 0 -4px 24px rgba(0,0,0,0.25);
-            border-radius: 16px;
-            padding: 14px;
+            top: 110px;
+            left: 10px;
             z-index: 1000;
-            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        #route-panel.active {
-            bottom: 20px;
-        }
-
-        .panel-text {
-            font-size: 11px;
+        .btn-floating-shortcut {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(4px);
             color: #333;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-
-        .panel-distance {
-            font-size: 13px;
-            font-weight: bold;
-            color: #6f42c1;
-            margin-bottom: 10px;
-            background: #f1f0f7;
-            padding: 6px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        /* Sekcja szybkich skrótów startowych na dole */
-        .quick-start-box {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        .btn-quick-start {
-            background: #e9ecef;
-            color: #333;
-            border: 1px solid #ced4da;
-            padding: 8px 4px;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            width: 36px;
+            height: 36px;
             border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        .btn-quick-start:active { background: #dee2e6; }
+
+        /* LATAJĄCY PRZYCISK: ZAPLANUJ TRASĘ */
+        #btn-trigger-plan {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            background: rgba(30, 30, 30, 0.88);
+            backdrop-filter: blur(6px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 22px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        #btn-trigger-plan:active { transform: translateX(-50%) scale(0.96); background: #111; }
+
+        /* DOLNY PANEL PLANOWANIA GOOGLE-STYLE */
+        #route-panel {
+            position: absolute;
+            bottom: -360px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 94%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -6px 30px rgba(0,0,0,0.25);
+            border-radius: 20px;
+            padding: 14px;
+            z-index: 1000;
+            transition: bottom 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            box-sizing: border-box;
+        }
+
+        #route-panel.active {
+            bottom: 15px;
+        }
+
+        /* KAFELKI PUNKTÓW (DRAGGABLE/SORTABLE STYLE) */
+        .route-tiles-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .route-tile {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 8px 10px;
+            gap: 8px;
+        }
+
+        .tile-label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #6c757d;
+            min-width: 45px;
+        }
+
+        .tile-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #212529;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tile-actions {
+            display: flex;
+            gap: 2px;
+        }
+
+        .btn-tile-sort {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 2px 5px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        .btn-tile-sort:active { background: #e9ecef; }
+
+        .panel-distance {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            background: #6f42c1;
+            margin-bottom: 10px;
+            padding: 9px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(111, 66, 193, 0.2);
+        }
 
         .btn-go-route {
             background: #28a745;
             color: white;
             text-align: center;
-            padding: 11px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 12px;
             font-weight: bold;
             text-decoration: none;
             display: block;
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.35);
             font-size: 13px;
         }
         
@@ -222,30 +288,53 @@
             border: none;
             color: #dc3545;
             font-size: 11px;
-            margin-top: 6px;
+            margin-top: 8px;
             width: 100%;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
+    <div id="map">
+        <div class="map-floating-controls">
+            <button class="btn-floating-shortcut" onclick="ustawStartGps()" title="Wymuś Start z GPS">📍</button>
+            <button class="btn-floating-shortcut" onclick="ustawStartSiedziba()" title="Wymuś Start z Siedziby">🏢</button>
+        </div>
+    </div>
 
-    <!-- ZMODYFIKOWANY DOLNY PANEL TRASY -->
+    <button id="btn-trigger-plan" onclick="otworzPlaner()">🗺️ Zaplanuj trasę</button>
+
     <div id="route-panel">
-        <div class="panel-text" id="route-summary">Wybierz punkty podróży na mapie lub użyj skrótów poniżej...</div>
-        
-        <!-- SZYBKIE PRZYCISKI STARTOWE -->
-        <div class="quick-start-box">
-            <button class="btn-quick-start" onclick="ustawStartGps()">📍 Start z pozycji GPS</button>
-            <button class="btn-quick-start" onclick="ustawStartSiedziba()">🏢 Start z Siedziby</button>
+        <div class="route-tiles-container">
+            <div class="route-tile" id="tile-start">
+                <span class="tile-label" style="color:#6f42c1;">START:</span>
+                <span class="tile-name" id="name-start">Wybierz punkt...</span>
+                <div class="tile-actions">
+                    <button class="btn-tile-sort" onclick="przesunWDol('start')">🔽</button>
+                </div>
+            </div>
+            <div class="route-tile" id="tile-via">
+                <span class="tile-label" style="color:#b814fd;">PRZEZ:</span>
+                <span class="tile-name" id="name-via">(brak punktu)</span>
+                <div class="tile-actions">
+                    <button class="btn-tile-sort" onclick="przesunWGore('via')">🔼</button>
+                    <button class="btn-tile-sort" onclick="przesunWDol('via')">🔽</button>
+                </div>
+            </div>
+            <div class="route-tile" id="tile-meta">
+                <span class="tile-label" style="color:#fd7e14;">META:</span>
+                <span class="tile-name" id="name-meta">Wybierz punkt...</span>
+                <div class="tile-actions">
+                    <button class="btn-tile-sort" onclick="przesunWGore('meta')">🔼</button>
+                </div>
+            </div>
         </div>
 
         <div class="panel-distance" id="route-distance">Odległość: -- km</div>
-        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Wyznacz tę trasę w Google Maps</a>
-        <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Resetuj planowanie</button>
+        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps">🚗 Otwórz nawigację w Google Maps</a>
+        <button class="btn-clear-route" onclick="wyczyscTrase()">❌ Zamknij planer / Reset</button>
     </div>
 
     <script>
@@ -253,65 +342,47 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `
-                    const CACHE_NAME = 'enprom-map-v7';
-                    const ASSETS = [
-                        '/',
-                        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-                    ];
-                    self.addEventListener('install', e => {
-                        e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
-                    });
-                    self.addEventListener('fetch', e => {
-                        e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-                    });
+                    const CACHE_NAME = 'enprom-map-v9';
+                    const ASSETS = [ '/', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' ];
+                    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
+                    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
                 `;
                 const blob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log(err));
             });
         }
 
-        // Inicjalizacja mapy
         const map = L.map('map', { zoomSnap: 0.5 });
 
-        // JASNY PODKŁAD MAPY
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
-            if (typ === "SE") {
-                url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
-            }
+            if (typ === "SE") url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
             return L.icon({
-                iconUrl: url,
-                shadowUrl: '', 
-                iconSize: [22, 36],
-                iconAnchor: [11, 36],
-                popupAnchor: [1, -30],
+                iconUrl: url, iconSize: [22, 36], iconAnchor: [11, 36], popupAnchor: [1, -30],
                 className: status === "nieaktywne" ? "projekt-nieaktywny" : ""
             });
         }
 
-        // Baza punktów i projektów
         const projekty = [
             { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownikNazwa: "Filip Correia", telKierownik: "+48533350594" },
             { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownikNazwa: "Michał Baliński", telKierownik: "+48509721633", bhpNazwa: "Joanna Wójcikiewicz", telBhp: "+48798411926" },
-            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownikNazwa: "Joanna Nowicka", telKierownik: "+48533350557", bhpNazwa: "Brak osoby", telBhp: "" },
-            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownikNazwa: "Maciej Waszak", telKierownik: "+48000000000", bhpNazwa: "Rafał Rawecki", telBhp: "+48000000000" },
-            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownikNazwa: "Łukasz Turchan", telKierownik: "+48000000000", bhpNazwa: "Arkadiusz Wieczorek", telBhp: "+48000000000" },
-            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownikNazwa: "Patryk Trojanowski", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
-            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
-            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278, kierownikNazwa: "Aleksander Jarkow", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
-            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Do uzupełnienia", telBhp: "+48000000000" },
-            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709, kierownikNazwa: "Marcin Gralak", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
-            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownikNazwa: "Krzysztof Stokłosa", telKierownik: "+48000000000", bhpNazwa: "Jakub Gacek", telBhp: "+48000000000", customUrl: "https://maps.app.goo.gl/JGM4A4wGAZCgUqx3A?g_st=ac" },
-            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownikNazwa: "Arkadiusz Okrzeja", telKierownik: "+48000000000", bhpNazwa: "Brak osoby", telBhp: "" },
-            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Szymon Wrona", telBhp: "+48000000000" },
-            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownikNazwa: "Tomasz Nyszk", telKierownik: "+48000000000", bhpNazwa: "Daniel Riopka", telBhp: "+48000000000" },
-            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownikNazwa: "Do uzupełnienia", telKierownik: "+48000000000", bhpNazwa: "Marta Pojasek", telBhp: "+48000000000" }
+            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownikNazwa: "Joanna Nowicka", telKierownik: "+48533350557" },
+            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownikNazwa: "Maciej Waszak", telKierownik: "+48000000000" },
+            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownikNazwa: "Łukasz Turchan", telKierownik: "+48000000000" },
+            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownikNazwa: "Patryk Trojanowski", telKierownik: "+48000000000" },
+            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389 },
+            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278 },
+            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417 },
+            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709 },
+            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028 },
+            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463 },
+            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614 },
+            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547 },
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375 }
         ];
 
         let punktStart = null;
@@ -322,118 +393,139 @@
         const punktyDoKadrowania = [];
 
         projekty.forEach(projekt => {
-            const googleMapsUrl = projekt.customUrl ? projekt.customUrl : `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
-            
-            let statusTekst = "";
-            let statusKlasa = "";
-            if (projekt.status === "staly") { statusTekst = "📌 PUNKT STAŁY"; statusKlasa = "status-staly"; }
-            else if (projekt.status === "aktywne") { statusTekst = "🟢 W REALIZACJI"; statusKlasa = "status-aktywne"; }
-            else { statusTekst = "⚠️ UKOŃCZONO"; statusKlasa = "status-nieaktywne"; }
-
+            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${projekt.lat},${projekt.lng}`;
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
-            let bhpButtonHtml = (projekt.bhpNazwa === "Brak osoby" || !projekt.telBhp) 
-                ? `<div class="popup-btn bhp disabled">⛑️ BHP: Brak osoby</div>` 
-                : `<a href="tel:${projekt.telBhp}" class="popup-btn bhp">⛑️ BHP: ${projekt.bhpNazwa}</a>`;
+            let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : (projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO");
+            let statusKlasa = "status-" + projekt.status;
 
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     <div class="status-badge ${statusKlasa}">${statusTekst}</div>
-                    
-                    <a href="tel:${projekt.telKierownik}" class="popup-btn kierownik">📞 Kier. ${projekt.kierownikNazwa}</a>
-                    ${bhpButtonHtml}
-                    
-                    <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">🚗 Jeden punkt (Google Maps)</a>
-                    
+                    <a href="tel:${projekt.telKierownik || ''}" class="popup-btn kierownik">📞 Kierownik</a>
+                    <a href="${googleMapsUrl}" target="_blank" class="popup-btn nawiguj">🚗 Punkt w Google Maps</a>
                     <div class="route-grid">
-                        <button class="popup-btn btn-route-start" onclick="ustawTrase(${projekt.id}, 'start')">📍 START</button>
-                        <button class="popup-btn btn-route-via" onclick="ustawTrase(${projekt.id}, 'via')">🔄 PRZEJAZD</button>
-                        <button class="popup-btn btn-route-end" onclick="ustawTrase(${projekt.id}, 'meta')">🏁 META</button>
+                        <button class="popup-btn btn-route-start" onclick="ustawTraseZPopupa(${projekt.id}, 'start')">📍 START</button>
+                        <button class="popup-btn btn-route-via" onclick="ustawTraseZPopupa(${projekt.id}, 'via')">🔄 PRZEZ</button>
+                        <button class="popup-btn btn-route-end" onclick="ustawTraseZPopupa(${projekt.id}, 'meta')">🏁 META</button>
                     </div>
                 </div>
             `;
 
             const marker = L.marker([projekt.lat, projekt.lng], {
-                icon: stworzIkone(projekt.typ, projekt.status)
+                icon: stworzIkone(projekt.typ, projekt.status),
+                draggable: true
             }).addTo(map);
 
-            const klasaTooltipu = projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip";
-            const tekstTooltipu = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
-
-            marker.bindTooltip(tekstTooltipu, {
-                permanent: true, direction: 'top', className: klasaTooltipu, offset: [0, -6]
+            marker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                projekt.lat = pos.lat;
+                projekt.lng = pos.lng;
+                if ((punktStart && punktStart.id === projekt.id) || (punktPrzejazd && punktPrzejazd.id === projekt.id) || (punktMeta && punktMeta.id === projekt.id)) {
+                    aktualizujPanelTrasy();
+                }
             });
 
+            marker.bindTooltip((projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`, {
+                permanent: true, direction: 'top', className: projekt.status === "nieaktywne" ? "custom-tooltip projekt-nieaktywny" : "custom-tooltip", offset: [0, -6]
+            });
             marker.bindPopup(popupContent);
         });
 
-        // SZYBKIE SKRÓTY STARTOWE
+        // OTWIERANIE PANELU I DOMYŚLNY GPS
+        function otworzPlaner() {
+            document.getElementById('btn-trigger-plan').style.display = 'none';
+            document.getElementById('route-panel').classList.add('active');
+            
+            // JEŻELI START JEST PUSTY, AUTOMATYCZNIE USTAW GPS JAKO START
+            if (!punktStart && aktualneWspolrzedneGps) {
+                ustawStartGps();
+            } else {
+                aktualizujPanelTrasy();
+            }
+        }
+
         function ustawStartGps() {
             if (aktualneWspolrzedneGps) {
-                punktStart = {
-                    nazwa: "Twoja pozycja (GPS)",
-                    lat: aktualneWspolrzedneGps.lat,
-                    lng: aktualneWspolrzedneGps.lng
-                };
-                aktualizujPanelTrasy();
+                punktStart = { id: "gps_static", nazwa: "Twoja lokalizacja (GPS)", lat: aktualneWspolrzedneGps.lat, lng: aktualneWspolrzedneGps.lng };
+                if (userMarker) userMarker.dragging.enable();
+                if (!document.getElementById('route-panel').classList.contains('active')) {
+                    otworzPlaner();
+                } else {
+                    aktualizujPanelTrasy();
+                }
             } else {
-                alert("Nie udało się jeszcze pobrać Twojej pozycji GPS. Upewnij się, że masz włączoną lokalizację w telefonie.");
+                alert("Pobieram sygnał GPS... Upewnij się, że masz włączoną lokalizację.");
             }
         }
 
         function ustawStartSiedziba() {
-            // Szukamy Siedziby w bazie danych (id: 13)
             const siedziba = projekty.find(p => p.id === 13);
             if (siedziba) {
-                punktStart = siedziba;
-                aktualizujPanelTrasy();
+                punktStart = Object.assign({}, siedziba);
+                otworzPlaner();
             }
         }
 
-        function ustawTrase(id, rola) {
+        function ustawTraseZPopupa(id, rola) {
             const projekt = projekty.find(p => p.id === id);
             if (!projekt) return;
+            
+            // Kopia obiektu chroni przed błędami referencji przy zamianie kolejności
+            const kopia = Object.assign({}, projekt);
 
-            if (rola === 'start') punktStart = projekt;
-            if (rola === 'via') punktPrzejazd = projekt;
-            if (rola === 'meta') punktMeta = projekt;
+            if (rola === 'start') punktStart = kopia;
+            if (rola === 'via') punktPrzejazd = kopia;
+            if (rola === 'meta') punktMeta = kopia;
 
             map.closePopup();
+            otworzPlaner();
+        }
+
+        /* DYNAMICZNA ZAMIANA KAFELKÓW (GOOGLE MAPS DRAG & DROP ALTERNATIVE) */
+        function przesunWDol(skad) {
+            if (skad === 'start') {
+                // Start wędruje na pozycję Przejazd, Przejazd na Start
+                let temp = punktStart;
+                punktStart = punktPrzejazd;
+                punktPrzejazd = temp;
+            } else if (skad === 'via') {
+                // Przejazd wędruje na Metę, Meta na Przejazd
+                let temp = punktPrzejazd;
+                punktPrzejazd = punktMeta;
+                punktMeta = temp;
+            }
+            aktualizujPanelTrasy();
+        }
+
+        function przesunWGore(skad) {
+            if (skad === 'via') {
+                let temp = punktPrzejazd;
+                punktPrzejazd = punktStart;
+                punktStart = temp;
+            } else if (skad === 'meta') {
+                let temp = punktMeta;
+                punktMeta = punktPrzejazd;
+                punktPrzejazd = temp;
+            }
             aktualizujPanelTrasy();
         }
 
         function formatujCzas(sekundy) {
-            const minutyWszystkie = Math.round(sekundy / 60);
-            const godziny = Math.floor(minutyWszystkie / 60);
-            const minuty = minutyWszystkie % 60;
-            return godziny > 0 ? `${godziny} godz. ${minuty} min` : `${minuty} min`;
+            const m = Math.round(sekundy / 60);
+            const h = Math.floor(m / 60);
+            return h > 0 ? `${h} godz. ${m % 60} min` : `${m} min`;
         }
 
         function aktualizujPanelTrasy() {
-            const panel = document.getElementById('route-panel');
-            const summary = document.getElementById('route-summary');
+            // Aktualizacja nazw w kafelkach
+            document.getElementById('name-start').innerText = punktStart ? punktStart.nazwa : "Wybierz punkt startu...";
+            document.getElementById('name-via').innerText = punktPrzejazd ? punktPrzejazd.nazwa : "(brak punktu pośredniego)";
+            document.getElementById('name-meta').innerText = punktMeta ? punktMeta.nazwa : "Wybierz cel podróży...";
+
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
-
-            // Pokazujemy panel zawsze, gdy cokolwiek zaczynamy planować
-            if (!punktStart && !punktPrzejazd && !punktMeta) {
-                panel.classList.remove('active');
-                if (liniaTrasy) map.removeLayer(liniaTrasy);
-                return;
-            }
-
-            panel.classList.add('active');
-
-            const nazwaStart = punktStart ? punktStart.nazwa : "???";
-            const nazwaVia = punktPrzejazd ? punktPrzejazd.nazwa : "(brak)";
-            const nazwaMeta = punktMeta ? punktMeta.nazwa : "???";
-
-            summary.innerHTML = `
-                <strong>Z:</strong> ${nazwaStart}<br>
-                ${punktPrzejazd ? `<strong>Przez:</strong> ${nazwaVia}<br>` : ''}
-                <strong>Do:</strong> ${nazwaMeta}
-            `;
 
             const punktyTrasy = [];
             if (punktStart) punktyTrasy.push(punktStart);
@@ -441,50 +533,35 @@
             if (punktMeta) punktyTrasy.push(punktMeta);
 
             if (punktyTrasy.length >= 2) {
-                distanceText.innerHTML = `⏳ Kalkulacja trasy drogowej i czasu...`;
-
-                const sklonowanePunkty = punktyTrasy.map(p => `${p.lng},${p.lat}`).join(';');
-                const urlOserem = `https://router.project-osrm.org/route/v1/driving/${sklonowanePunkty}?overview=full&geometries=geojson`;
-
-                fetch(urlOserem)
-                    .then(response => response.json())
+                distanceText.innerHTML = `⏳ Przeliczanie drogi i czasu...`;
+                const query = punktyTrasy.map(p => `${p.lng},${p.lat}`).join(';');
+                
+                fetch(`https://router.project-osrm.org/route/v1/driving/${query}?overview=full&geometries=geojson`)
+                    .then(r => r.json())
                     .then(data => {
                         if (data.code === 'Ok' && data.routes.length > 0) {
                             if (liniaTrasy) map.removeLayer(liniaTrasy);
-
-                            const trasaDrogowa = data.routes[0];
-                            const dystansKm = (trasaDrogowa.distance / 1000).toFixed(1);
-                            const czasPrzejazdu = formatujCzas(trasaDrogowa.duration);
+                            const trasa = data.routes[0];
                             
-                            distanceText.innerHTML = `🚗 Droga: <strong>${dystansKm} km</strong> (ok. <strong>${czasPrzejazdu}</strong>)`;
-
-                            const koordynaty = trasaDrogowa.geometry.coordinates.map(c => [c[1], c[0]]);
-                            liniaTrasy = L.polyline(koordynaty, {
-                                color: '#6f42c1',
-                                weight: 5,
-                                opacity: 0.85
+                            distanceText.innerHTML = `🚗 Droga: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${formatujCzas(trasa.duration)}</strong>)`;
+                            
+                            liniaTrasy = L.polyline(trasa.geometry.coordinates.map(c => [c[1], c[0]]), {
+                                color: '#6f42c1', weight: 5, opacity: 0.85
                             }).addTo(map);
-
                         } else {
-                            distanceText.innerHTML = `⚠️ Błąd wyznaczania dróg.`;
+                            distanceText.innerHTML = `⚠️ Brak połączenia drogowego.`;
                         }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        distanceText.innerHTML = `⚠️ Brak połączenia z serwerem dróg.`;
-                    });
+                    }).catch(() => distanceText.innerHTML = `⚠️ Błąd sieci.`);
             } else {
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
-                distanceText.innerHTML = `Wybierz kolejne punkty trasy...`;
+                distanceText.innerHTML = `Wybierz min. 2 punkty na trasie...`;
             }
 
+            // Budowanie linku Google Maps
             if (punktStart && punktMeta) {
-                let url = "";
-                if (punktPrzejazd) {
-                    url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&waypoints=${punktPrzejazd.lat},${punktPrzejazd.lng}&travelmode=driving`;
-                } else {
-                    url = `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
-                }
+                let url = punktPrzejazd 
+                    ? `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&waypoints=${punktPrzejazd.lat},${punktPrzejazd.lng}&travelmode=driving`
+                    : `https://www.google.com/maps/dir/?api=1&origin=${punktStart.lat},${punktStart.lng}&destination=${punktMeta.lat},${punktMeta.lng}&travelmode=driving`;
                 googleLink.href = url;
                 googleLink.style.display = "block";
             } else {
@@ -493,40 +570,46 @@
         }
 
         function wyczyscTrase() {
-            punktStart = null;
-            punktPrzejazd = null;
-            punktMeta = null;
-            aktualizujPanelTrasy();
+            punktStart = null; punktPrzejazd = null; punktMeta = null;
+            if (liniaTrasy) map.removeLayer(liniaTrasy);
+            if (userMarker) userMarker.dragging.disable();
+            
+            document.getElementById('route-panel').classList.remove('active');
+            document.getElementById('btn-trigger-plan').style.display = 'flex';
         }
 
-        // GPS ŚLEDZENIE Z ZAPISYWANIEM WSPÓŁRZĘDNYCH DO TRASY
+        // GPS WATCHER
         let userMarker = null;
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(
-                (position) => {
-                    const uLat = position.coords.latitude;
-                    const uLng = position.coords.longitude;
-                    
-                    // Zapisujemy współrzędne globalnie, żeby przycisk "Z pozycji GPS" wiedział skąd ruszyć
-                    aktualneWspolrzedneGps = { lat: uLat, lng: uLng };
-
-                    const userIcon = L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    aktualneWspolrzedneGps = { lat, lng };
 
                     if (userMarker) {
-                        userMarker.setLatLng([uLat, uLng]);
+                        if (!userMarker.dragging || !userMarker.dragging.moving()) userMarker.setLatLng([lat, lng]);
                     } else {
-                        userMarker = L.marker([uLat, uLng], { icon: userIcon }).addTo(map);
-                        userMarker.bindTooltip("Twoja pozycja", { direction: 'top', className: 'custom-tooltip' });
+                        userMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] })
+                        }).addTo(map);
+                        userMarker.bindTooltip("Tu jesteś", { direction: 'top', className: 'custom-tooltip' });
+                        
+                        userMarker.on('dragend', function(e) {
+                            const nPos = e.target.getLatLng();
+                            if (punktStart && punktStart.id === "gps_static") {
+                                punktStart.lat = nPos.lat; punktStart.lng = nPos.lng;
+                                aktualizujPanelTrasy();
+                            }
+                        });
                     }
                 },
-                (error) => console.log("GPS Error: ", error.message),
+                (err) => console.log(err.message),
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        if (punktyDoKadrowania.length > 0) {
-            map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
-        }
+        if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
     </script>
 </body>
 </html>
