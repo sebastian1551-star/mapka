@@ -7,6 +7,8 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 
     <style>
         html, body {
@@ -25,14 +27,31 @@
             position: relative;
         }
 
-        /* MNIEJ PRZEZROCZYSTE MARKERY I ETYKIETY DLA UKOŃCZONYCH PROJEKTÓW */
+        /* TRACE MARKERY I ETYKIETY DLA UKOŃCZONYCH PROJEKTÓW */
         .projekt-nieaktywny {
-            opacity: 0.35 !important; /* Zwiększona widoczność, napisy są czytelne */
+            opacity: 0.35 !important;
             filter: grayscale(100%) brightness(0.7);
-            pointer-events: none !important; /* Blokada klikania na mapie */
+            pointer-events: none !important;
         }
 
-        /* POPUPY W KLIMACIE DARK MODE - RESPONSYWNE */
+        /* CENTRALNE, WYŚRODKOWANE ETYKIETY NA MAPIE */
+        .map-label-centered {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            white-space: nowrap;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .map-label-centered.label-nieaktywna {
+            opacity: 0.45;
+        }
+
+        /* POPUPY W KLIMACIE DARK MODE */
         .leaflet-popup-content-wrapper {
             background: rgba(15, 15, 15, 0.95) !important;
             border: 1px solid #333;
@@ -44,99 +63,66 @@
         .leaflet-popup-tip { 
             background: rgba(15, 15, 15, 0.95) !important;
         }
-
         .popup-container {
             text-align: center;
-            min-width: 250px;
+            min-width: 240px;
         }
-
         .popup-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #24ff56;
             margin-bottom: 4px;
             line-height: 1.3;
         }
-
         .status-badge {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             display: inline-block;
-            padding: 2px 10px;
+            padding: 1px 8px;
             border-radius: 20px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             background-color: #222;
             color: #aaa;
             border: 1px solid #444;
         }
         .status-staly { color: #ffc107; border-color: #ffc107; }
         .status-aktywne { color: #28a745; border-color: #28a745; }
-        .status-nieaktywny { color: #ff4d4d; border-color: #ff4d4d; }
 
-        /* DWUKOLUMNOWY UKŁAD MINI KAFELKÓW PERSONELU */
+        /* KAFELKI PERSONELU W POPUPIE */
         .popup-staff-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 8px;
+            gap: 4px;
+            margin-bottom: 6px;
         }
-
         .staff-tile {
             background: #222;
             border: 1px solid #333;
-            border-radius: 8px;
-            padding: 6px;
+            border-radius: 6px;
+            padding: 5px;
             text-align: left;
             text-decoration: none !important;
             color: #fff !important;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .staff-tile:active {
-            background: #2b2b2b;
         }
         .tile-kierownik { border-left: 3px solid #0056b3; }
         .tile-bhp { border-left: 3px solid #ffc107; }
-
-        .tile-role {
-            font-size: 9px;
-            font-weight: bold;
-            color: #888;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-        .tile-name {
-            font-size: 11px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #eee;
-        }
-        .tile-action {
-            font-size: 9px;
-            color: #24ff56;
-            margin-top: 4px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
+        .tile-role { font-size: 8px; font-weight: bold; color: #888; text-transform: uppercase; }
+        .tile-name { font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee; }
+        .tile-action { font-size: 8px; color: #24ff56; margin-top: 2px; font-weight: bold; }
 
         .popup-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            margin-top: 4px;
-            padding: 10px;
+            padding: 8px;
             color: white !important;
             text-decoration: none;
             font-weight: bold;
-            font-size: 13px;
-            border-radius: 8px;
+            font-size: 12px;
+            border-radius: 6px;
             cursor: pointer;
             border: none;
             width: 100%;
@@ -144,129 +130,115 @@
         }
         .btn-dodaj-punkt { background-color: #28a745; }
 
-        .custom-tooltip {
-            background: rgba(20, 20, 20, 0.9) !important;
-            border: 1px solid #444 !important;
-            color: #fff !important;
-            font-weight: 600;
-            font-size: 10px;
-            border-radius: 4px;
-            padding: 2px 6px;
-        }
-
         .user-location-marker {
             background: #007bff;
-            border: 3px solid #fff;
+            border: 2px solid #fff;
             border-radius: 50%;
-            box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
         }
 
-        /* LATAJĄCY PRZYCISK */
+        /* LATAJĄCY PRZYCISK DOLNY */
         #btn-trigger-plan {
             position: absolute;
-            bottom: 25px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
             background: rgba(20, 20, 20, 0.95);
             border: 1px solid #444;
             color: #24ff56;
-            padding: 14px 26px;
-            border-radius: 25px;
-            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        /* PANEL TRASY */
+        /* ZOPTYMALIZOWANY, MNIEJSZY PANEL PLANOWANIA TRASY */
         #route-panel {
             position: absolute;
             bottom: -600px;
             left: 50%;
             transform: translateX(-50%);
-            width: 94%;
-            max-width: 430px;
+            width: 96%;
+            max-width: 380px;
             background: rgba(15, 15, 15, 0.98);
             border: 1px solid #333;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
-            border-radius: 20px;
-            padding: 14px;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
+            border-radius: 16px;
+            padding: 10px;
             z-index: 1000;
             transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
             box-sizing: border-box;
             color: #fff;
-            max-height: 85vh;
+            max-height: 80vh;
             display: flex;
             flex-direction: column;
         }
 
         #route-panel.active {
-            bottom: 15px;
+            bottom: 10px;
         }
 
         .route-tiles-scroll {
             overflow-y: auto;
-            max-height: 260px;
+            max-height: 200px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 12px;
-            padding: 4px;
-            position: relative;
+            gap: 6px;
+            margin-bottom: 8px;
+            padding: 2px;
         }
 
-        /* KAFELKI W PLANERZE */
+        /* SMUKLEJSZE, BARDZIEJ DOPASOWANE KAFELKI W PLANERZE */
         .route-tile {
             display: flex;
             align-items: center;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 12px 14px;
-            gap: 12px;
+            background: #222;
+            border: 1px solid #383838;
+            border-radius: 8px;
+            padding: 8px 10px;
+            gap: 8px;
             user-select: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            touch-action: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .route-tile.dragging {
-            opacity: 0.9;
-            background-color: #3d2475;
-            border: 1px solid #9b5de5;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.7);
-            transform: scale(1.02);
-            z-index: 9999;
+        /* Klasa dodawana automatycznie przez SortableJS podczas płynnego ruchu */
+        .sortable-ghost {
+            opacity: 0.3;
+            background-color: #5c2bab !important;
+            border: 1px dashed #9b5de5 !important;
         }
 
         .tile-drag-handle {
-            color: #888;
-            font-size: 18px;
+            color: #666;
+            font-size: 14px;
             cursor: grab;
-            padding: 0 4px;
+            padding: 0 2px;
         }
 
         .tile-badge {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             background: #111;
-            padding: 4px 8px;
-            border-radius: 6px;
+            padding: 2px 6px;
+            border-radius: 4px;
             color: #fff;
             border: 1px solid #333;
-            min-width: 35px;
+            min-width: 32px;
             text-align: center;
         }
         .tile-badge.badge-start { color: #24ff56; border-color: #24ff56; }
         .tile-badge.badge-meta { color: #ff4d4d; border-color: #ff4d4d; }
 
         .tile-name {
-            font-size: 13.5px;
+            font-size: 12px;
             font-weight: 600;
-            color: #fff;
+            color: #eee;
             flex-grow: 1;
             white-space: nowrap;
             overflow: hidden;
@@ -277,57 +249,35 @@
             background: none;
             border: none;
             color: #ff4d4d;
-            font-size: 16px;
+            font-size: 13px;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 2px 4px;
         }
 
         .creator-options {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 5px;
+            margin-bottom: 6px;
         }
 
         .btn-creator-choice {
             background: #222;
             border: 1px solid #444;
             color: #fff;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 13px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 11.5px;
             font-weight: 600;
             text-align: left;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-creator-choice:active { background: #333; }
-
-        .btn-add-next-step {
-            background: rgba(111, 66, 193, 0.2);
-            border: 1px dashed #6f42c1;
-            color: #c58eff;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
         }
 
         .quick-select-container {
             background: #161616;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid #333;
-            padding: 6px;
-            margin-bottom: 10px;
+            padding: 4px;
         }
 
         .quick-select-menu {
@@ -335,20 +285,33 @@
             background: #222;
             color: #fff;
             border: 1px solid #444;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 13px;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
             outline: none;
         }
 
+        .btn-add-next-step {
+            background: rgba(111, 66, 193, 0.15);
+            border: 1px dashed #6f42c1;
+            color: #c58eff;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
         .panel-distance {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #fff;
             background: #5c2bab;
-            margin-bottom: 10px;
-            padding: 12px;
-            border-radius: 12px;
+            margin-bottom: 6px;
+            padding: 8px;
+            border-radius: 8px;
             text-align: center;
         }
 
@@ -356,98 +319,34 @@
             background: #218838;
             color: white;
             text-align: center;
-            padding: 14px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 8px;
             font-weight: bold;
             text-decoration: none;
             display: block;
-            font-size: 14px;
+            font-size: 12.5px;
         }
         
         .btn-clear-route {
             background: none;
             border: none;
             color: #ff4d4d;
-            font-size: 12px;
-            margin-top: 10px;
+            font-size: 11px;
+            margin-top: 6px;
             width: 100%;
             cursor: pointer;
             font-weight: bold;
         }
 
-        /* -------------------------------------------------------------
-           RESPONSYWNY SYSTEM PRZEŁĄCZANIA WIDOKÓW (KOMPUTER PC / TELEFON)
-           Modyfikuje skale i czcionki na ekranach powyżej 768px (Duże napisy na PC)
-           ------------------------------------------------------------- */
+        /* DOSTOSOWANIE POD EKRAMY PC (Wyższe limity i czytelność) */
         @media (min-width: 768px) {
-            .popup-title {
-                font-size: 18px !important;
-                margin-bottom: 8px;
-            }
-            .status-badge {
-                font-size: 12px !important;
-                padding: 4px 14px !important;
-                margin-bottom: 12px;
-            }
-            .tile-role {
-                font-size: 11px !important;
-                margin-bottom: 4px;
-            }
-            .tile-name {
-                font-size: 14px !important;
-                font-weight: 700 !important;
-            }
-            .tile-action {
-                font-size: 11px !important;
-                margin-top: 8px;
-            }
-            .staff-tile {
-                padding: 10px !important;
-                gap: 6px;
-            }
-            .popup-btn {
-                font-size: 16px !important;
-                padding: 14px !important;
-                margin-top: 8px;
-            }
-            .popup-container {
-                min-width: 340px !important;
-            }
             #route-panel {
-                max-width: 500px !important;
-                padding: 20px !important;
-                border-radius: 24px !important;
+                max-width: 420px;
+                padding: 14px;
             }
-            .tile-name {
-                font-size: 16px !important;
-            }
-            .tile-badge {
-                font-size: 12px !important;
-                padding: 6px 10px !important;
-            }
-            .route-tile {
-                padding: 16px 18px !important;
-            }
-            .panel-distance {
-                font-size: 17px !important;
-                padding: 16px !important;
-            }
-            .btn-go-route {
-                font-size: 16px !important;
-                padding: 16px !important;
-            }
-            .btn-creator-choice, .quick-select-menu, .btn-add-next-step {
-                font-size: 15px !important;
-                padding: 14px !important;
-            }
-            #creator-title {
-                font-size: 13px !important;
-                margin-bottom: 8px !important;
-            }
-            .custom-tooltip {
-                font-size: 12px !important;
-                padding: 4px 8px !important;
-            }
+            .route-tile { padding: 10px 12px; }
+            .tile-name { font-size: 13px; }
+            .popup-title { font-size: 15px; }
         }
     </style>
 </head>
@@ -465,8 +364,8 @@
         </button>
 
         <div class="creator-options" id="creator-box">
-            <div style="font-size:11px; color:#aaa; margin-bottom:4px; font-weight:bold;" id="creator-title">
-                WYBIERZ PUNKT POCZĄTKOWY TRASY:
+            <div style="font-size:10px; color:#aaa; margin-bottom:2px; font-weight:bold;">
+                WYBIERZ PUNKT TRASY:
             </div>
             <button class="btn-creator-choice" onclick="dodajGpsKreator()">📍 Moja aktualna lokalizacja</button>
             <button class="btn-creator-choice" onclick="dodajSiedzibeKreator()">🏢 Siedziba główna</button>
@@ -501,12 +400,10 @@
             });
         }
 
-        // PEŁNA LISTA PROJEKTÓW ENPROM Z UWZGLĘDNIENIEM NUMERU DLA LESZNA
         const projekty = [
             { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "brak" },
             { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "Joanna Wójcikiewicz", telBhp: "798411926" },
             { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "220042 CPK", lat: 52.209911, lng: 20.475766, kierownik: "Joanna Nowicka", telKierownik: "533350557", bhp: "Taras Kepych", telBhp: "533350549" },
-            // ZADBANIE O DETAL: Dodano brakujący numer dla SE Leszno (235926)
             { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "235926 Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099" },
             { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "Arkadiusz Wieczorek", telBhp: "518267094" },
             { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Patryk Trojanowski", telKierownik: "533350588", bhp: "Brak działań", telBhp: "" },
@@ -524,7 +421,7 @@
             { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Arkadiusz Smoczyński", telBhp: "533350318" },
-            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "LN Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
+            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" }
         ];
 
@@ -533,25 +430,24 @@
         let aktualneWspolrzedneGps = null;
         const punktyDoKadrowania = [];
 
+        // Inicjalizacja listy rozwijanej wyboru stacji
         const picker = document.getElementById('select-project-picker');
         projekty.forEach(projekt => {
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
             const opt = document.createElement('option');
             opt.value = projekt.id;
-            opt.innerText = (projekt.status === 'staly' ? '📌 ' : '') + (projekt.status === 'nieaktywne' ? '⚫ [UKOŃCZONO] ' : '') + projekt.nazwa;
+            opt.innerText = (projekt.status === 'staly' ? '📌 ' : '') + (projekt.status === 'nieaktywne' ? '⚫ ' : '') + projekt.nazwa;
             picker.appendChild(opt);
 
-            let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : (projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO");
-            
-            let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak przypisanego numeru')"`;
-            let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak przypisanego numeru')"`;
+            let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : "🟢 W REALIZACJI";
+            let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak numeru')"`;
+            let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak numeru')"`;
 
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     <div class="status-badge status-${projekt.status}">${statusTekst}</div>
-                    
                     <div class="popup-staff-grid">
                         <a ${linkKierownik} class="staff-tile tile-kierownik">
                             <div>
@@ -562,7 +458,7 @@
                         </a>
                         <a ${linkBhp} class="staff-tile tile-bhp">
                             <div>
-                                <div class="tile-role">Nadzór BHP</div>
+                                <div class="tile-role">Nadzór</div>
                                 <div class="tile-name" title="${projekt.bhp}">${projekt.bhp}</div>
                             </div>
                             ${projekt.telBhp ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
@@ -572,30 +468,44 @@
                 </div>
             `;
 
+            // DODANIE MARKERA
             const marker = L.marker([projekt.lat, projekt.lng], {
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // DETAL: Napisy dla projektów ukończonych (Radzyń, Hamburg) są teraz wypluwane na stałe na mapie i czytelne (mniej transparentne w css)
+            // DETAL: NAPISY IDEALNIE NA ŚRODKU (Wykorzystanie czystych DivIcon Leaflet)
             let tekstEtykiety = "";
             if (projekt.status === "staly" || projekt.typ === "WF") {
                 tekstEtykiety = projekt.etykieta;
-            } else if (projekt.status === "nieaktywne") {
-                tekstEtykiety = `[UKOŃCZONO] ${projekt.etykieta}`;
             } else {
                 tekstEtykiety = `${projekt.typ}: ${projekt.etykieta}`;
             }
 
-            marker.bindTooltip(tekstEtykiety, {
-                permanent: true, 
-                direction: 'top', 
-                className: "custom-tooltip", 
-                offset: [0, -6]
-            });
+            // Tworzenie etykiety tekstowej pozycjonowanej centralnie nad ikoną
+            L.marker([projekt.lat, projekt.lng], {
+                icon: L.divIcon({
+                    className: `map-label-centered ${projekt.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
+                    html: `<div>${tekstEtykiety}</div>`,
+                    iconAnchor: [60, 26], // Przesunięcie kotwicy tekstu idealnie na środek
+                    iconSize: [120, 14]
+                }),
+                interactive: false
+            }).addTo(map);
 
-            // Wyłączamy popup tylko dla nieaktywnych ponieważ i tak są nieklikalne
             if (projekt.status !== "nieaktywne") {
                 marker.bindPopup(popupContent);
+            }
+        });
+
+        // INTEGRACJA SORTABLEJS DLA MAŚLANIE PŁYNNEGO PRZECIĄGANIA
+        const container = document.getElementById('tiles-container');
+        const sortable = Sortable.create(container, {
+            animation: 250, // Czas trwania płynnej animacji zamiany kafelków (w ms)
+            handle: '.tile-drag-handle', // Można ciągnąć za cały kafelek lub chwytak
+            ghostClass: 'sortable-ghost', // Klasa stylizująca kafelek-widmo podczas ruchu
+            onEnd: function () {
+                // Wywoływane natychmiast po upuszczeniu kafelka
+                przebudujTablicePoPrzeciagnieciu();
             }
         });
 
@@ -636,7 +546,7 @@
                 punktyTrasy.push({ id: "gps_" + Date.now(), nazwa: "📍 Moja lokalizacja (GPS)", lat: aktualneWspolrzedneGps.lat, lng: aktualneWspolrzedneGps.lng });
                 renderujTrase();
             } else {
-                alert("Wyszukuję sygnał GPS... Poczekaj chwilę.");
+                alert("Wyszukuję sygnał GPS... Upewnij się, że lokalizacja w telefonie jest włączona.");
             }
         }
 
@@ -653,81 +563,14 @@
             renderujTrase();
         }
 
-        function zainicjujDragAndDrop() {
-            const container = document.getElementById('tiles-container');
-            const tiles = container.querySelectorAll('.route-tile');
-
-            tiles.forEach(tile => {
-                tile.addEventListener('dragstart', () => tile.classList.add('dragging'));
-                tile.addEventListener('dragend', () => {
-                    tile.classList.remove('dragging');
-                    przenieśKafelkiWTablicy();
-                });
-
-                tile.addEventListener('touchstart', (e) => {
-                    if (e.target.classList.contains('btn-tile-delete')) return;
-                    tile.classList.add('dragging');
-                    tile.style.position = 'relative';
-                }, { passive: true });
-
-                tile.addEventListener('touchmove', (e) => {
-                    const draggingTile = container.querySelector('.route-tile.dragging');
-                    if (!draggingTile) return;
-
-                    const touch = e.touches[0];
-                    const pozycjePoza = pobierzElementPozaPrzeciaganym(container, touch.clientY);
-
-                    if (pozycjePoza == null) {
-                        container.appendChild(draggingTile);
-                    } else {
-                        container.insertBefore(draggingTile, pozycjePoza);
-                    }
-                }, { passive: true });
-
-                tile.addEventListener('touchend', () => {
-                    if (tile.classList.contains('dragging')) {
-                        tile.classList.remove('dragging');
-                        przenieśKafelkiWTablicy();
-                    }
-                });
-            });
-
-            container.addEventListener('dragover', e => {
-                e.preventDefault();
-                const draggingTile = document.querySelector('.dragging');
-                if (!draggingTile) return;
-                const pozycjaPoza = pobierzElementPozaPrzeciaganym(container, e.clientY);
-                if (pozycjaPoza == null) {
-                    container.appendChild(draggingTile);
-                } else {
-                    container.insertBefore(draggingTile, pozycjaPoza);
-                }
-            });
-        }
-
-        function pobierzElementPozaPrzeciaganym(container, y) {
-            const elementyNiedragging = [...container.querySelectorAll('.route-tile:not(.dragging)')];
-            return elementyNiedragging.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-
-        function przenieśKafelkiWTablicy() {
-            const container = document.getElementById('tiles-container');
+        function przebudujTablicePoPrzeciagnieciu() {
             const aktualneKafelki = [...container.querySelectorAll('.route-tile')];
-            
             const nowaKolejnosc = aktualneKafelki.map(tile => {
                 const id = tile.getAttribute('data-id');
                 return punktyTrasy.find(p => p.id === id);
             });
             punktyTrasy = nowaKolejnosc;
-            renderujTrase(false);
+            renderujTrase(false); // Renderuj bez ponownego niszczenia drzewa DOM kafelków
             renderujSameBadges();
         }
 
@@ -751,7 +594,6 @@
         }
 
         function renderujTrase(odswiezBlokiHTML = true) {
-            const container = document.getElementById('tiles-container');
             if (odswiezBlokiHTML) {
                 container.innerHTML = "";
                 punktyTrasy.forEach((punkt, index) => {
@@ -762,7 +604,6 @@
 
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
-                    tile.setAttribute('draggable', 'true');
                     tile.setAttribute('data-id', punkt.id);
                     tile.innerHTML = `
                         <span class="tile-drag-handle">☰</span>
@@ -772,7 +613,6 @@
                     `;
                     container.appendChild(tile);
                 });
-                zainicjujDragAndDrop();
             }
 
             if (punktyTrasy.length > 0) {
@@ -786,7 +626,7 @@
             const googleLink = document.getElementById('btn-google-maps');
 
             if (punktyTrasy.length >= 2) {
-                distanceText.innerHTML = `⏳ Kalkulowanie drogi...`;
+                distanceText.innerHTML = `⏳ OSRM oblicza drogę...`;
                 const query = punktyTrasy.map(p => `${p.lng},${p.lat}`).join(';');
                 
                 fetch(`https://router.project-osrm.org/route/v1/driving/${query}?overview=full&geometries=geojson`)
@@ -797,15 +637,15 @@
                             const trasa = data.routes[0];
                             const m = Math.round(trasa.duration / 60);
                             const h = Math.floor(m / 60);
-                            distanceText.innerHTML = `🚗 Razem: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>)`;
+                            distanceText.innerHTML = `🚗 Łącznie: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>)`;
                             
                             liniaTrasy = L.polyline(trasa.geometry.coordinates.map(c => [c[1], c[0]]), {
-                                color: '#6f42c1', weight: 5, opacity: 0.85
+                                color: '#6f42c1', weight: 4, opacity: 0.8
                             }).addTo(map);
                         } else {
-                            distanceText.innerHTML = `⚠️ Brak dróg dojazdowych.`;
+                            distanceText.innerHTML = `⚠️ Brak połączenia drogowego.`;
                         }
-                    }).catch(() => distanceText.innerHTML = `⚠️ Błąd mapowania.`);
+                    }).catch(() => distanceText.innerHTML = `⚠️ Błąd połączenia z serwerem.`);
 
                 let origin = `${punktyTrasy[0].lat},${punktyTrasy[0].lng}`;
                 let destination = `${punktyTrasy[punktyTrasy.length - 1].lat},${punktyTrasy[punktyTrasy.length - 1].lng}`;
@@ -815,7 +655,7 @@
                 googleLink.style.display = "block";
             } else {
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
-                distanceText.innerHTML = punktyTrasy.length === 1 ? `Dodaj drugi punkt, by poznać trasę...` : `Uzupełnij punkty trasy...`;
+                distanceText.innerHTML = punktyTrasy.length === 1 ? `Dodaj kolejny cel, aby wyznaczyć trasę...` : `Uzupełnij punkty trasy...`;
                 googleLink.style.display = "none";
             }
         }
@@ -839,16 +679,9 @@
                         userMarker.setLatLng([lat, lng]);
                     } else {
                         userMarker = L.marker([lat, lng], {
-                            icon: L.divIcon({ className: 'user-location-marker', iconSize: [14, 14], iconAnchor: [7, 7] })
+                            icon: L.divIcon({ className: 'user-location-marker', iconSize: [12, 12], iconAnchor: [6, 6] })
                         }).addTo(map);
                     }
                 },
                 (err) => console.log(err.message),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        }
-
-        if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
-    </script>
-</body>
-</html>
+                { enableHighAccuracy: true, timeout: 100
