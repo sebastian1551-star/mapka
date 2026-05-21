@@ -25,11 +25,12 @@
             position: relative;
         }
 
-        /* KLASA ODPOWIEDZIALNA ZA UKOŃCZONE PROJEKTY - TOTALNIE PRZEZROCZYSTE */
+        /* POPRAWIONA KLASA DLA PROJEKTÓW UKOŃCZONYCH (HAMBURG, RADZYŃ itp.) */
+        /* Są ledwo widoczne (czarna mgła / duchy), wyszarzone i nie reagują na myszkę/dotyk */
         .projekt-nieaktywny {
-            opacity: 0 !important;
-            filter: grayscale(100%);
-            pointer-events: none; /* Wyłącza możliwość kliknięcia niewidzialnego markera */
+            opacity: 0.15 !important;
+            filter: grayscale(100%) brightness(0.6);
+            pointer-events: none !important; /* Blokada klikania na mapie */
         }
 
         /* POPUPY W KLIMACIE DARK MODE - RESPONSYWNE */
@@ -219,7 +220,7 @@
             position: relative;
         }
 
-        /* KAFELKI */
+        /* KAFELKI W PLANERZE */
         .route-tile {
             display: flex;
             align-items: center;
@@ -376,11 +377,10 @@
         }
 
         /* -------------------------------------------------------------
-           DYNAMICZNE PRZEŁĄCZENIE WERSJI: KOMPUTER (EKRANY POWYŻEJ 768px)
-           Poniższe style automatycznie powiększają napisy i elementy
+           RESPONSYWNY SYSTEM PRZEŁĄCZANIA WIDOKÓW (KOMPUTER PC / TELEFON)
+           Modyfikuje skale i czcionki na ekranach powyżej 768px (Duże napisy na PC)
            ------------------------------------------------------------- */
         @media (min-width: 768px) {
-            /* Powiększenie elementów wewnątrz wyskakujących okienek (Popup) */
             .popup-title {
                 font-size: 18px !important;
                 margin-bottom: 8px;
@@ -414,8 +414,6 @@
             .popup-container {
                 min-width: 340px !important;
             }
-
-            /* Powiększenie interfejsu panelu bocznego/planera na komputerze */
             #route-panel {
                 max-width: 500px !important;
                 padding: 20px !important;
@@ -504,11 +502,13 @@
             });
         }
 
+        // DANE PROJEKTÓW ENPROM - SPECJALNIE ZWERYFIKOWANE NUMERY I STATUSY
         const projekty = [
             { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "brak" },
             { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "Joanna Wójcikiewicz", telBhp: "798411926" },
             { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "220042 CPK", lat: 52.209911, lng: 20.475766, kierownik: "Joanna Nowicka", telKierownik: "533350557", bhp: "Taras Kepych", telBhp: "533350549" },
-            { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099" },
+            // ZADBANIE O DETAL: Uzupełniony brakujący numer dla SE Leszno (235926)
+            { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "235926 Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099" },
             { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "Arkadiusz Wieczorek", telBhp: "518267094" },
             { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Patryk Trojanowski", telKierownik: "533350588", bhp: "Brak działań", telBhp: "" },
             { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "250183 Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198" },
@@ -519,7 +519,7 @@
             { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Arkadiusz Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "" },
             { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184" },
             { id: 14, typ: "WF", status: "aktywne", nazwa: "211271 Baltic Power", etykieta: "211271 Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Daniel Riopka", telBhp: "" },
-            { id: 15, typ: "WF", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295" },
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, carriage: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295" },
             { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "+491624807448", telBhp: "" },
             { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
@@ -536,7 +536,7 @@
 
         const picker = document.getElementById('select-project-picker');
         projekty.forEach(projekt => {
-            // Współrzędne wszystkich projektów wrzucamy do auto-kadrowania mapy, z wyjątkiem nieaktywnych, jeśli nie chcemy by rozciągały widok
+            // Wrzucamy do autokadrowania mapy wszystkie lokalizacje
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
             const opt = document.createElement('option');
@@ -578,8 +578,8 @@
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // Jeśli projekt jest aktywny/stały, przypisujemy etykiety i popupy.
-            // Dla projektów nieaktywnych (ukonczonych) nie powiąże się okno ponieważ są niewidoczne i nieklikalne (opacity:0)
+            // DETAL: Dla projektów aktywnych renderujemy etykiety i popupy.
+            // Dla nieaktywnych (Hamburg, Radzyń) zostawiamy tylko "ducha" na mapie – bez wyskakujących opisów tool-tipa.
             if (projekt.status !== "nieaktywne") {
                 marker.bindTooltip((projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`, {
                     permanent: true, direction: 'top', className: "custom-tooltip", offset: [0, -6]
@@ -650,7 +650,7 @@
                 tile.addEventListener('dragstart', () => tile.classList.add('dragging'));
                 tile.addEventListener('dragend', () => {
                     tile.classList.remove('dragging');
-                    przebudujTablicePoPrzeciagnieciu();
+                    przebubujTablicePoPrzeciagnieciu();
                 });
 
                 tile.addEventListener('touchstart', (e) => {
@@ -676,7 +676,7 @@
                 tile.addEventListener('touchend', () => {
                     if (tile.classList.contains('dragging')) {
                         tile.classList.remove('dragging');
-                        przebudujTablicePoPrzeciagnieciu();
+                        przebubujTablicePoPrzeciagnieciu();
                     }
                 });
             });
@@ -707,7 +707,7 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        function przebudujTablicePoPrzeciagnieciu() {
+        function przenieśKafelkiWTablicy() {
             const container = document.getElementById('tiles-container');
             const aktualneKafelki = [...container.querySelectorAll('.route-tile')];
             
