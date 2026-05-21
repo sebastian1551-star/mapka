@@ -25,6 +25,7 @@
             width: 100%;
             height: 100vh;
             position: relative;
+            z-index: 1;
         }
 
         /* TRACE MARKERY DLA UKOŃCZONYCH PROJEKTÓW */
@@ -305,18 +306,19 @@
 
     <div id="route-panel">
         <div style="font-size:10px; color:#aaa; margin-bottom:6px; font-weight:bold; text-align:center;">
-            👇 DOTKNIJ DOWOLNY PUNKT NA MAPIE, ABY GO DODAĆ 👇
+            👇 DOTKNIJ PUNKT NA MAPIE, ABY GO DODAĆ DO TRASY 👇
         </div>
         
         <div class="route-tiles-scroll" id="tiles-container"></div>
 
-        <div class="panel-distance" id="route-distance">Kliknij punkt na mapie...</div>
+        <div class="panel-distance" id="route-distance">Kliknij stację na mapie...</div>
         <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">🚗 Uruchom nawigację w Google Maps</a>
         <button class="btn-clear-route" onclick="zamknijIResetuj()">❌ Zamknij / Resetuj planer</button>
     </div>
 
     <script>
-        const map = L.map('map', { zoomSnap: 0.5 });
+        const map = L.map('map', { zoomSnap: 0.5 }).setView([52.0, 19.0], 6);
+        
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
@@ -352,45 +354,4 @@
             { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "+491624807448", telBhp: "" },
             { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Arkadiusz Smoczyński", telBhp: "533350318" },
-            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" }
-        ];
-
-        let punktyTrasy = [];
-        let liniaTrasy = null;
-        let aktualneWspolrzedneGps = null;
-        const punktyDoKadrowania = [];
-
-        projekty.forEach(projekt => {
-            punktyDoKadrowania.push([projekt.lat, projekt.lng]);
-
-            // GENEROWANIE IKONY I MARKERA
-            const marker = L.marker([projekt.lat, projekt.lng], {
-                icon: stworzIkone(projekt.typ, projekt.status)
-            }).addTo(map);
-
-            // PRZYPISANIE KLIKNIĘCIA W PUNKT -> BEZPOŚREDNIE DODANIE DO TRASY
-            marker.on('click', function(e) {
-                // Zapobiega otwieraniu domyślnych dymków jeśli planer jest otwarty lub kliknięto w celu wyznaczenia drogi
-                dodajDoTrasyZId(projekt.id);
-            });
-
-            // NAPISY IDEALNIE NA ŚRODKU
-            let tekstEtykiety = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
-
-            L.marker([projekt.lat, projekt.lng], {
-                icon: L.divIcon({
-                    className: `map-label-centered ${projekt.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
-                    html: `<div>${tekstEtykiety}</div>`,
-                    iconAnchor: [60, 26], 
-                    iconSize: [120, 14]
-                }),
-                interactive: true // Pozwala kliknąć również w sam wyśrodkowany napis, żeby dodać punkt!
-            }).on('click', function() {
-                dodajDoTrasyZId(projekt.id);
-            }).addTo(map);
-        });
-
-        // INICJALIZACJA SORTABLEJS - PŁYNNE I SZYBKIE PRZECIĄGAN
+            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711
