@@ -34,107 +34,26 @@
             filter: grayscale(100%) brightness(0.7);
         }
 
-        /* CENTRALNE, WYŚRODKOWANE ETYKIETY NA MAPIE */
+        /* POWIĘKSZONE, WYSOKO KONTRASTOWE ETYKIETY NA MAPIE */
         .map-label-centered {
             background: none !important;
             border: none !important;
             box-shadow: none !important;
             color: #ffffff;
-            font-weight: bold;
-            font-size: 11px;
+            font-weight: 800;
+            font-size: 13px; /* Zwiększona czcionka */
             text-align: center;
             white-space: nowrap;
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 
+                -2px -2px 0 #000,  2px -2px 0 #000,
+                -2px  2px 0 #000,  2px  2px 0 #000,
+                -2px  0px 0 #000,  2px  0px 0 #000,
+                 0px -2px 0 #000,  0px  2px 0 #000,
+                 0 3px 6px rgba(0,0,0,0.9);
         }
         
         .map-label-centered.label-nieaktywna {
-            opacity: 0.45;
-        }
-
-        /* POPUPY W KLIMACIE DARK MODE */
-        .leaflet-popup-content-wrapper {
-            background: rgba(15, 15, 15, 0.95) !important;
-            border: 1px solid #333;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            padding: 4px;
-            color: #fff;
-        }
-        .leaflet-popup-tip { 
-            background: rgba(15, 15, 15, 0.95) !important;
-        }
-        .popup-container {
-            text-align: center;
-            min-width: 240px;
-        }
-        .popup-title {
-            font-size: 13px;
-            font-weight: bold;
-            color: #24ff56;
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-        .status-badge {
-            font-size: 9px;
-            font-weight: bold;
-            display: inline-block;
-            padding: 1px 8px;
-            border-radius: 20px;
-            margin-bottom: 6px;
-            background-color: #222;
-            color: #aaa;
-            border: 1px solid #444;
-        }
-        .status-staly { color: #ffc107; border-color: #ffc107; }
-        .status-aktywne { color: #28a745; border-color: #28a745; }
-
-        /* KAFELKI PERSONELU W POPUPIE */
-        .popup-staff-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-        .staff-tile {
-            background: #222;
-            border: 1px solid #333;
-            border-radius: 6px;
-            padding: 5px;
-            text-align: left;
-            text-decoration: none !important;
-            color: #fff !important;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .tile-kierownik { border-left: 3px solid #0056b3; }
-        .tile-bhp { border-left: 3px solid #ffc107; }
-        .tile-role { font-size: 8px; font-weight: bold; color: #888; text-transform: uppercase; }
-        .tile-name { font-size: 10.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee; }
-        .tile-action { font-size: 8px; color: #24ff56; margin-top: 2px; font-weight: bold; }
-
-        .popup-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            color: white !important;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .btn-dodaj-punkt { background-color: #28a745; }
-
-        .user-location-marker {
-            background: #007bff;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            opacity: 0.5;
         }
 
         /* LATAJĄCY PRZYCISK DOLNY */
@@ -147,9 +66,9 @@
             background: rgba(20, 20, 20, 0.95);
             border: 1px solid #444;
             color: #24ff56;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -158,24 +77,24 @@
             gap: 6px;
         }
 
-        /* KOMPAKTOWY, MAŁY PANEL TRASY DOSTOSOWANY DO TELEFONU */
+        /* MODERNIZOWANY, ERGONOMICZNY PANEL TRASY */
         #route-panel {
             position: absolute;
             bottom: -600px;
             left: 50%;
             transform: translateX(-50%);
             width: 96%;
-            max-width: 370px;
+            max-width: 420px;
             background: rgba(15, 15, 15, 0.98);
             border: 1px solid #333;
             box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
             border-radius: 16px;
-            padding: 10px;
+            padding: 12px;
             z-index: 1000;
             transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
             box-sizing: border-box;
             color: #fff;
-            max-height: 75vh;
+            max-height: 80vh;
             display: flex;
             flex-direction: column;
         }
@@ -186,25 +105,70 @@
 
         .route-tiles-scroll {
             overflow-y: auto;
-            max-height: 220px;
+            max-height: 280px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            margin-bottom: 6px;
+            gap: 6px;
+            margin-bottom: 8px;
             padding: 2px;
         }
 
-        /* SMUKŁE KAFELKI W PLANERZE */
+        /* SMUKŁE KAFELKI W PLANERZE Z DANYMI BHP / KIEROWNIKA */
         .route-tile {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             background: #222;
             border: 1px solid #383838;
-            border-radius: 8px;
-            padding: 7px 10px;
-            gap: 8px;
+            border-radius: 10px;
+            padding: 8px 12px;
+            gap: 6px;
             user-select: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tile-main-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tile-staff-row {
+            display: flex;
+            gap: 4px;
+            border-top: 1px dashed #333;
+            padding-top: 5px;
+            margin-top: 2px;
+        }
+
+        .tile-staff-contact {
+            flex: 1;
+            background: #181818;
+            border: 1px solid #2a2a2a;
+            border-radius: 5px;
+            padding: 4px 6px;
+            font-size: 11px;
+            color: #ccc;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .tile-staff-contact span {
+            max-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tile-staff-contact.has-phone {
+            border-color: #444;
+        }
+        .tile-staff-contact.has-phone:active {
+            background: #2a2a2a;
+        }
+        .phone-icon {
+            color: #24ff56;
+            font-weight: bold;
+            font-size: 10px;
         }
 
         /* Stylizacja kafelka podczas płynnego ruchu */
@@ -215,28 +179,28 @@
         }
 
         .tile-drag-handle {
-            color: #666;
-            font-size: 14px;
+            color: #888;
+            font-size: 16px;
             cursor: grab;
-            padding: 0 2px;
+            padding: 0 4px;
         }
 
         .tile-badge {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: bold;
             background: #111;
-            padding: 2px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             color: #fff;
             border: 1px solid #333;
-            min-width: 32px;
+            min-width: 36px;
             text-align: center;
         }
         .tile-badge.badge-start { color: #24ff56; border-color: #24ff56; }
         .tile-badge.badge-meta { color: #ff4d4d; border-color: #ff4d4d; }
 
         .tile-name {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             color: #eee;
             flex-grow: 1;
@@ -249,18 +213,18 @@
             background: none;
             border: none;
             color: #ff4d4d;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             padding: 2px 4px;
         }
 
         .panel-distance {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             color: #fff;
             background: #5c2bab;
             margin-bottom: 6px;
-            padding: 8px;
+            padding: 10px;
             border-radius: 8px;
             text-align: center;
         }
@@ -269,12 +233,12 @@
             background: #218838;
             color: white;
             text-align: center;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             font-weight: bold;
             text-decoration: none;
             display: block;
-            font-size: 12.5px;
+            font-size: 13px;
         }
         
         .btn-clear-route {
@@ -286,15 +250,6 @@
             width: 100%;
             cursor: pointer;
             font-weight: bold;
-        }
-
-        @media (min-width: 768px) {
-            #route-panel {
-                max-width: 400px;
-                padding: 12px;
-            }
-            .route-tile { padding: 9px 11px; }
-            .tile-name { font-size: 12.5px; }
         }
     </style>
 </head>
@@ -323,41 +278,42 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        // LEKKO POWIĘKSZONE IKONY DLA WYGODY NA KOMPUTERACH [28, 46] zamiast [22, 36]
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
             if (typ === "SE" || typ === "UW") url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
             return L.icon({
                 iconUrl: url, 
-                iconSize: [22, 36], 
-                iconAnchor: [11, 36], 
-                popupAnchor: [1, -30],
+                iconSize: [28, 46], 
+                iconAnchor: [14, 46], 
+                popupAnchor: [1, -38],
                 className: status === "nieaktywne" ? "projekt-nieaktywny" : ""
             });
         }
 
         const projekty = [
-            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "brak" },
-            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "Joanna Wójcikiewicz", telBhp: "798411926" },
+            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "" },
+            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "J. Wójcikiewicz", telBhp: "798411926" },
             { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "220042 CPK", lat: 52.209911, lng: 20.475766, kierownik: "Joanna Nowicka", telKierownik: "533350557", bhp: "Taras Kepych", telBhp: "533350549" },
             { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "235926 Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099" },
-            { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "Arkadiusz Wieczorek", telBhp: "518267094" },
-            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Patryk Trojanowski", telKierownik: "533350588", bhp: "Brak działań", telBhp: "" },
+            { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "A. Wieczorek", telBhp: "518267094" },
+            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "P. Trojanowski", telKierownik: "533350588", bhp: "-", telBhp: "" },
             { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "250183 Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198" },
             { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "250093 Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", telKierownik: "", bhp: "-", telBhp: "" },
             { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "244855 Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198" },
             { id: 10, typ: "LN", status: "aktywne", nazwa: "241133 LN Demon Munstenberg", etykieta: "251133 Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", telKierownik: "789123456", bhp: "Marek Woźniak", telBhp: "654321987" },
-            { id: 11, typ: "LN", status: "aktywne", nazwa: "250002 LN Trębaczew", etykieta: "250002 Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "Krzysztof stokłosa", telKierownik: "533306946", bhp: "Jakub Gacek", telBhp: "503042697" },
-            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Arkadiusz Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "" },
+            { id: 11, typ: "LN", status: "aktywne", nazwa: "250002 LN Trębaczew", etykieta: "250002 Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "K. Stokłosa", telKierownik: "533306946", bhp: "Jakub Gacek", telBhp: "503042697" },
+            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "A. Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "" },
             { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184" },
             { id: 14, typ: "WF", status: "aktywne", nazwa: "211271 Baltic Power", etykieta: "211271 Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Daniel Riopka", telBhp: "" },
             { id: 15, typ: "WF", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295" },
-            { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "+491624807448", telBhp: "" },
-            { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Arkadiusz Smoczyński", telBhp: "533350318" },
-            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" }
+            { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "Nadzór DE", telBhp: "+491624807448" },
+            { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "" },
+            { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "" },
+            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "" },
+            { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "A. Smoczyński", telBhp: "533350318" },
+            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "" },
+            { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "" }
         ];
 
         let punktyTrasy = [];
@@ -368,65 +324,32 @@
         projekty.forEach(projekt => {
             punktyDoKadrowania.push([projekt.lat, projekt.lng]);
 
-            // GENEROWANIE IKONY I MARKERA
+            // POZYCJONOWANIE MARKERA GLÓWNEGO
             const marker = L.marker([projekt.lat, projekt.lng], {
                 icon: stworzIkone(projekt.typ, projekt.status)
             }).addTo(map);
 
-            // KLIKNIĘCIE W MARKER -> BEZPOŚREDNIE DODANIE DO TRASY
             marker.on('click', function() {
                 dodajDoTrasyZId(projekt.id);
             });
 
-            // NAPISY IDEALNIE NA ŚRODKU
+            // NAPISY IDEALNIE WYŚRODKOWANE (ZWIĘKSZONY ROZMIAR I KONTRAST)
             let tekstEtykiety = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
 
             L.marker([projekt.lat, projekt.lng], {
                 icon: L.divIcon({
                     className: `map-label-centered ${projekt.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
                     html: `<div>${tekstEtykiety}</div>`,
-                    iconAnchor: [60, 26], 
-                    iconSize: [120, 14]
+                    iconAnchor: [75, 32], 
+                    iconSize: [150, 16]
                 }),
                 interactive: true 
             }).on('click', function() {
                 dodajDoTrasyZId(projekt.id);
             }).addTo(map);
-
-            // Szczegóły tła (Popup) otwierane wyłącznie poprzez dłuższe przytrzymanie / prawy przycisk
-            let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : "🟢 W REALIZACJI";
-            let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak numeru')"`;
-            let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak numeru')"`;
-
-            const popupContent = `
-                <div class="popup-container">
-                    <div class="popup-title">${projekt.nazwa}</div>
-                    <div class="status-badge status-${projekt.status}">${statusTekst}</div>
-                    <div class="popup-staff-grid">
-                        <a ${linkKierownik} class="staff-tile tile-kierownik">
-                            <div>
-                                <div class="tile-role">Kierownik</div>
-                                <div class="tile-name" title="${projekt.kierownik}">${projekt.kierownik}</div>
-                            </div>
-                            ${projekt.telKierownik ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
-                        </a>
-                        <a ${linkBhp} class="staff-tile tile-bhp">
-                            <div>
-                                <div class="tile-role">Nadzór</div>
-                                <div class="tile-name" title="${projekt.bhp}">${projekt.bhp}</div>
-                            </div>
-                            ${projekt.telBhp ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
-                        </a>
-                    </div>
-                </div>
-            `;
-            if(projekt.status !== "nieaktywne") {
-                marker.bindPopup(popupContent);
-                marker.on('contextmenu', function() { marker.openPopup(); });
-            }
         });
 
-        // INICJALIZACJA SORTABLEJS - PŁYNNE I SZYBKIE PRZECIĄGANIE
+        // INICJALIZACJA SORTABLEJS - PŁYNNE PRZECIĄGANIE
         const container = document.getElementById('tiles-container');
         Sortable.create(container, {
             animation: 200, 
@@ -443,11 +366,20 @@
             renderujTrase();
         }
 
-        // DODAWANIE DO TRASY POPRZEZ KLIKNIĘCIE W MARKER
         function dodajDoTrasyZId(id) {
             const prj = projekty.find(p => p.id === id);
             if (prj) {
-                punktyTrasy.push({ id: "prj_" + Date.now(), dbId: prj.id, nazwa: prj.nazwa, lat: prj.lat, lng: prj.lng });
+                punktyTrasy.push({ 
+                    id: "prj_" + Date.now(), 
+                    dbId: prj.id, 
+                    nazwa: prj.nazwa, 
+                    lat: prj.lat, 
+                    lng: prj.lng,
+                    kierownik: prj.kierownik || "Brak",
+                    telKierownik: prj.telKierownik || "",
+                    bhp: prj.bhp || "Brak",
+                    telBhp: prj.telBhp || ""
+                });
                 
                 if (!document.getElementById('route-panel').classList.contains('active')) {
                     otworzPlaner();
@@ -460,12 +392,6 @@
         function usunPunkt(index) {
             punktyTrasy.splice(index, 1);
             renderujTrase();
-        }
-
-        function przenieś(arr, fromIndex, toIndex) {
-            const element = arr[fromIndex];
-            arr.splice(fromIndex, 1);
-            arr.splice(toIndex, 0, element);
         }
 
         function przeliczOdNowaKolejnosc() {
@@ -513,14 +439,29 @@
                     if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
                     if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; dodatkowaKlasa = "badge-meta"; }
 
+                    // Budowanie linków telefonicznych
+                    let pmHtml = punkt.telKierownik 
+                        ? `<a href="tel:${punkt.telKierownik}" class="tile-staff-contact has-phone">👤 <span>PM: ${punkt.kierownik}</span> <span class="phone-icon">📞</span></a>`
+                        : `<div class="tile-staff-contact">👤 <span>PM: ${punkt.kierownik}</span></div>`;
+
+                    let bhpHtml = punkt.telBhp 
+                        ? `<a href="tel:${punkt.telBhp}" class="tile-staff-contact has-phone">🛡️ <span>BHP: ${punkt.bhp}</span> <span class="phone-icon">📞</span></a>`
+                        : `<div class="tile-staff-contact">🛡️ <span>BHP: ${punkt.bhp}</span></div>`;
+
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
                     tile.setAttribute('data-id', punkt.id);
                     tile.innerHTML = `
-                        <span class="tile-drag-handle">☰</span>
-                        <span class="tile-badge ${dodatkowaKlasa}">${etykieta}</span>
-                        <span class="tile-name">${punkt.nazwa}</span>
-                        <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
+                        <div class="tile-main-row">
+                            <span class="tile-drag-handle">☰</span>
+                            <span class="tile-badge ${dodatkowaKlasa}">${etykieta}</span>
+                            <span class="tile-name">${punkt.nazwa}</span>
+                            <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
+                        </div>
+                        <div class="tile-staff-row">
+                            ${pmHtml}
+                            ${bhpHtml}
+                        </div>
                     `;
                     container.appendChild(tile);
                 });
@@ -544,7 +485,7 @@
                             distanceText.innerHTML = `🚗 Razem: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>)`;
                             
                             liniaTrasy = L.polyline(trasa.geometry.coordinates.map(c => [c[1], c[0]]), {
-                                color: '#6f42c1', weight: 4, opacity: 0.8
+                                color: '#6f42c1', weight: 5, opacity: 0.85
                             }).addTo(map);
                         } else {
                             distanceText.innerHTML = `⚠️ Brak dróg dojazdowych.`;
@@ -593,7 +534,7 @@
             );
         }
 
-        if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [30, 30] });
+        if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
     </script>
 </body>
 </html>
