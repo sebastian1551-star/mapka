@@ -393,7 +393,7 @@
                 dodajDoTrasyZId(projekt.id);
             }).addTo(map);
 
-            // OPCJONALNIE: JEŚLI KTÓREŚ KLIKNIĘCIE MIAŁOBY POKAZAĆ POPUP, MOŻNA TO ROBIĆ NP. PRZEZ DOUBLE CLICK (DblClick), ŻEBY NIE PRZESZKADZAĆ W SZYBKIM PLANOWANIU
+            // Szczegóły tła (Popup) otwierane wyłącznie poprzez dłuższe przytrzymanie / prawy przycisk
             let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : "🟢 W REALIZACJI";
             let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak numeru')"`;
             let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak numeru')"`;
@@ -422,7 +422,6 @@
             `;
             if(projekt.status !== "nieaktywne") {
                 marker.bindPopup(popupContent);
-                // Otwieranie popupu tylko prawym przyciskiem myszy / przytrzymaniem, żeby lewy przycisk (klik) służył wyłącznie do błyskawicznego dodawania trasy
                 marker.on('contextmenu', function() { marker.openPopup(); });
             }
         });
@@ -463,13 +462,25 @@
             renderujTrase();
         }
 
-        function przebudujTablicePoPrzeciagnieciu() {
+        function przenieś(arr, fromIndex, toIndex) {
+            const element = arr[fromIndex];
+            arr.splice(fromIndex, 1);
+            arr.splice(toIndex, 0, element);
+        }
+
+        function przeliczOdNowaKolejnosc() {
             const aktualneKafelki = [...container.querySelectorAll('.route-tile')];
-            const nowaKolejnosc = aktualneKafelki.map(tile => {
+            const nowaKolejnosc = [];
+            aktualneKafelki.forEach(tile => {
                 const id = tile.getAttribute('data-id');
-                return punktyTrasy.find(p => p.id === id);
+                const odnaleziony = punktyTrasy.find(p => p.id === id);
+                if (odnaleziony) nowaKolejnosc.push(odnaleziony);
             });
             punktyTrasy = nowaKolejnosc;
+        }
+
+        function przebudujTablicePoPrzeciagnieciu() {
+            przeliczOdNowaKolejnosc();
             renderujTrase(false); 
             renderujSameBadges();
         }
@@ -500,7 +511,7 @@
                     let etykieta = "P" + (index + 1);
                     let dodatkowaKlasa = "";
                     if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
-                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META";Platforma dodatkowaKlasa = "badge-meta"; }
+                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; dodatkowaKlasa = "badge-meta"; }
 
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
