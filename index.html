@@ -354,4 +354,235 @@
             { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "+491624807448", telBhp: "" },
             { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
             { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
-            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711
+            { id: 19, typ: "UW", status: "aktywne", nazwa: "UW Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
+            { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Arkadiusz Smoczyński", telBhp: "533350318" },
+            { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" },
+            { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "Brak przypisania", telBhp: "" }
+        ];
+
+        let punktyTrasy = [];
+        let liniaTrasy = null;
+        let aktualneWspolrzedneGps = null;
+        const punktyDoKadrowania = [];
+
+        projekty.forEach(projekt => {
+            punktyDoKadrowania.push([projekt.lat, projekt.lng]);
+
+            // GENEROWANIE IKONY I MARKERA
+            const marker = L.marker([projekt.lat, projekt.lng], {
+                icon: stworzIkone(projekt.typ, projekt.status)
+            }).addTo(map);
+
+            // KLIKNIĘCIE W MARKER -> BEZPOŚREDNIE DODANIE DO TRASY
+            marker.on('click', function() {
+                dodajDoTrasyZId(projekt.id);
+            });
+
+            // NAPISY IDEALNIE NA ŚRODKU
+            let tekstEtykiety = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
+
+            L.marker([projekt.lat, projekt.lng], {
+                icon: L.divIcon({
+                    className: `map-label-centered ${projekt.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
+                    html: `<div>${tekstEtykiety}</div>`,
+                    iconAnchor: [60, 26], 
+                    iconSize: [120, 14]
+                }),
+                interactive: true 
+            }).on('click', function() {
+                dodajDoTrasyZId(projekt.id);
+            }).addTo(map);
+
+            // OPCJONALNIE: JEŚLI KTÓREŚ KLIKNIĘCIE MIAŁOBY POKAZAĆ POPUP, MOŻNA TO ROBIĆ NP. PRZEZ DOUBLE CLICK (DblClick), ŻEBY NIE PRZESZKADZAĆ W SZYBKIM PLANOWANIU
+            let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : "🟢 W REALIZACJI";
+            let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak numeru')"`;
+            let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak numeru')"`;
+
+            const popupContent = `
+                <div class="popup-container">
+                    <div class="popup-title">${projekt.nazwa}</div>
+                    <div class="status-badge status-${projekt.status}">${statusTekst}</div>
+                    <div class="popup-staff-grid">
+                        <a ${linkKierownik} class="staff-tile tile-kierownik">
+                            <div>
+                                <div class="tile-role">Kierownik</div>
+                                <div class="tile-name" title="${projekt.kierownik}">${projekt.kierownik}</div>
+                            </div>
+                            ${projekt.telKierownik ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
+                        </a>
+                        <a ${linkBhp} class="staff-tile tile-bhp">
+                            <div>
+                                <div class="tile-role">Nadzór</div>
+                                <div class="tile-name" title="${projekt.bhp}">${projekt.bhp}</div>
+                            </div>
+                            ${projekt.telBhp ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
+                        </a>
+                    </div>
+                </div>
+            `;
+            if(projekt.status !== "nieaktywne") {
+                marker.bindPopup(popupContent);
+                // Otwieranie popupu tylko prawym przyciskiem myszy / przytrzymaniem, żeby lewy przycisk (klik) służył wyłącznie do błyskawicznego dodawania trasy
+                marker.on('contextmenu', function() { marker.openPopup(); });
+            }
+        });
+
+        // INICJALIZACJA SORTABLEJS - PŁYNNE I SZYBKIE PRZECIĄGANIE
+        const container = document.getElementById('tiles-container');
+        Sortable.create(container, {
+            animation: 200, 
+            handle: '.tile-drag-handle', 
+            ghostClass: 'sortable-ghost', 
+            onEnd: function () {
+                przebudujTablicePoPrzeciagnieciu();
+            }
+        });
+
+        function otworzPlaner() {
+            document.getElementById('btn-trigger-plan').style.display = 'none';
+            document.getElementById('route-panel').classList.add('active');
+            renderujTrase();
+        }
+
+        // DODAWANIE DO TRASY POPRZEZ KLIKNIĘCIE W MARKER
+        function dodajDoTrasyZId(id) {
+            const prj = projekty.find(p => p.id === id);
+            if (prj) {
+                punktyTrasy.push({ id: "prj_" + Date.now(), dbId: prj.id, nazwa: prj.nazwa, lat: prj.lat, lng: prj.lng });
+                
+                if (!document.getElementById('route-panel').classList.contains('active')) {
+                    otworzPlaner();
+                } else {
+                    renderujTrase();
+                }
+            }
+        }
+
+        function usunPunkt(index) {
+            punktyTrasy.splice(index, 1);
+            renderujTrase();
+        }
+
+        function przebudujTablicePoPrzeciagnieciu() {
+            const aktualneKafelki = [...container.querySelectorAll('.route-tile')];
+            const nowaKolejnosc = aktualneKafelki.map(tile => {
+                const id = tile.getAttribute('data-id');
+                return punktyTrasy.find(p => p.id === id);
+            });
+            punktyTrasy = nowaKolejnosc;
+            renderujTrase(false); 
+            renderujSameBadges();
+        }
+
+        function renderujSameBadges() {
+            const kafelki = document.querySelectorAll('.route-tile');
+            kafelki.forEach((tile, index) => {
+                const badge = tile.querySelector('.tile-badge');
+                if (badge) {
+                    badge.className = "tile-badge";
+                    if (index === 0) {
+                        badge.innerText = "START";
+                        badge.classList.add('badge-start');
+                    } else if (index === kafelki.length - 1 && kafelki.length > 1) {
+                        badge.innerText = "META";
+                        badge.classList.add('badge-meta');
+                    } else {
+                        badge.innerText = "P" + (index + 1);
+                    }
+                }
+            });
+        }
+
+        function renderujTrase(odswiezBlokiHTML = true) {
+            if (odswiezBlokiHTML) {
+                container.innerHTML = "";
+                punktyTrasy.forEach((punkt, index) => {
+                    let etykieta = "P" + (index + 1);
+                    let dodatkowaKlasa = "";
+                    if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
+                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META";Platforma dodatkowaKlasa = "badge-meta"; }
+
+                    const tile = document.createElement('div');
+                    tile.className = "route-tile";
+                    tile.setAttribute('data-id', punkt.id);
+                    tile.innerHTML = `
+                        <span class="tile-drag-handle">☰</span>
+                        <span class="tile-badge ${dodatkowaKlasa}">${etykieta}</span>
+                        <span class="tile-name">${punkt.nazwa}</span>
+                        <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
+                    `;
+                    container.appendChild(tile);
+                });
+            }
+
+            const distanceText = document.getElementById('route-distance');
+            const googleLink = document.getElementById('btn-google-maps');
+
+            if (punktyTrasy.length >= 2) {
+                distanceText.innerHTML = `⏳ Kalkulowanie drogi OSRM...`;
+                const query = punktyTrasy.map(p => `${p.lng},${p.lat}`).join(';');
+                
+                fetch(`https://router.project-osrm.org/route/v1/driving/${query}?overview=full&geometries=geojson`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.code === 'Ok' && data.routes.length > 0) {
+                            if (liniaTrasy) map.removeLayer(liniaTrasy);
+                            const trasa = data.routes[0];
+                            const m = Math.round(trasa.duration / 60);
+                            const h = Math.floor(m / 60);
+                            distanceText.innerHTML = `🚗 Razem: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>)`;
+                            
+                            liniaTrasy = L.polyline(trasa.geometry.coordinates.map(c => [c[1], c[0]]), {
+                                color: '#6f42c1', weight: 4, opacity: 0.8
+                            }).addTo(map);
+                        } else {
+                            distanceText.innerHTML = `⚠️ Brak dróg dojazdowych.`;
+                        }
+                    }).catch(() => distanceText.innerHTML = `⚠️ Błąd połączenia trasy.`);
+
+                let origin = `${punktyTrasy[0].lat},${punktyTrasy[0].lng}`;
+                let destination = `${punktyTrasy[punktyTrasy.length - 1].lat},${punktyTrasy[punktyTrasy.length - 1].lng}`;
+                let waypoints = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
+                
+                googleLink.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? '&waypoints=' + waypoints : ''}&travelmode=driving`;
+                googleLink.style.display = "block";
+            } else {
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
+                distanceText.innerHTML = punktyTrasy.length === 1 ? `Wskaż kolejną stację na mapie...` : `Kliknij stację na mapie, by zacząć...`;
+                googleLink.style.display = "none";
+            }
+        }
+
+        function zamknijIResetuj() {
+            punktyTrasy = [];
+            if (liniaTrasy) map.removeLayer(liniaTrasy);
+            document.getElementById('route-panel').classList.remove('active');
+            document.getElementById('btn-trigger-plan').style.display = 'flex';
+        }
+
+        // Śledzenie pozycji użytkownika (Niebieski punkt)
+        let userMarker = null;
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    aktualneWspolrzedneGps = { lat, lng };
+
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]);
+                    } else {
+                        userMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({ className: 'user-location-marker', iconSize: [12, 12], iconAnchor: [6, 6] })
+                        }).addTo(map);
+                    }
+                },
+                (err) => console.log(err.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [30, 30] });
+    </script>
+</body>
+</html>
