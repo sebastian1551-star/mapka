@@ -25,6 +25,12 @@
             position: relative;
         }
 
+        /* KLASA ODPOWIEDZIALNA ZA WYGASZONE (ZAKOŃCZONE) PROJEKTY */
+        .projekt-nieaktywny {
+            opacity: 0.45 !important;
+            filter: grayscale(80%) drop-shadow(0 0 1px #000);
+        }
+
         /* POPUPY W KLIMACIE DARK MODE */
         .leaflet-popup-content-wrapper {
             background: rgba(15, 15, 15, 0.95) !important;
@@ -38,7 +44,7 @@
 
         .popup-container {
             text-align: center;
-            min-width: 230px;
+            min-width: 250px;
         }
 
         .popup-title {
@@ -64,17 +70,56 @@
         .status-aktywne { color: #28a745; border-color: #28a745; }
         .status-nieaktywne { color: #ff4d4d; border-color: #ff4d4d; }
 
-        /* Dane personelu w popupie */
-        .popup-staff-info {
-            font-size: 11px;
-            color: #ccc;
-            text-align: left;
-            background: #222;
-            padding: 8px;
-            border-radius: 6px;
+        /* DWUKOLUMNOWY UKŁAD MINI KAFELKÓW PERSONELU */
+        .popup-staff-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
             margin-bottom: 8px;
+        }
+
+        .staff-tile {
+            background: #222;
             border: 1px solid #333;
-            line-height: 1.4;
+            border-radius: 8px;
+            padding: 6px;
+            text-align: left;
+            text-decoration: none !important;
+            color: #fff !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .staff-tile:active {
+            background: #2b2b2b;
+        }
+        .tile-kierownik { border-left: 3px solid #0056b3; }
+        .tile-bhp { border-left: 3px solid #ffc107; }
+
+        .tile-role {
+            font-size: 9px;
+            font-weight: bold;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .tile-name {
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #eee;
+        }
+        .tile-action {
+            font-size: 9px;
+            color: #24ff56;
+            margin-top: 4px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 2px;
         }
 
         .popup-btn {
@@ -82,8 +127,8 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            margin-top: 6px;
-            padding: 11px;
+            margin-top: 4px;
+            padding: 10px;
             color: white !important;
             text-decoration: none;
             font-weight: bold;
@@ -93,10 +138,6 @@
             border: none;
             width: 100%;
             box-sizing: border-box;
-        }
-        .kierownik { 
-            background-color: #0056b3; 
-            margin-bottom: 4px;
         }
         .btn-dodaj-punkt { background-color: #28a745; }
 
@@ -117,7 +158,7 @@
             box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
         }
 
-        /* LATAJĄCY PRZYCISK: ZAPLANUJ TRASĘ */
+        /* LATAJĄCY PRZYCISK */
         #btn-trigger-plan {
             position: absolute;
             bottom: 25px;
@@ -340,7 +381,6 @@
     <button id="btn-trigger-plan" onclick="otworzPlaner()">🗺️ Zaplanuj trasę</button>
 
     <div id="route-panel">
-        
         <div class="route-tiles-scroll" id="tiles-container"></div>
 
         <button class="btn-add-next-step" id="btn-add-step" onclick="pokazOpcjeKreatora()" style="display:none;">
@@ -359,9 +399,6 @@
                     <option value="" disabled selected>📋 Wybierz projekt z listy...</option>
                 </select>
             </div>
-            <div style="font-size:10px; color:#666; text-align:center; margin-top:-4px;">
-                💡 Możesz też po prostu kliknąć dowolny punkt na mapie!
-            </div>
         </div>
 
         <div class="panel-distance" id="route-distance">Uzupełnij punkty trasy...</div>
@@ -376,32 +413,36 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        // FUNKCJA GENERUJĄCA IKONĘ Z UWZGLĘDNIENIEM STYLU DLA PROJEKTÓW NIEAKTYWNYCH
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
             if (typ === "SE") url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
+            
             return L.icon({
-                iconUrl: url, iconSize: [22, 36], iconAnchor: [11, 36], popupAnchor: [1, -30],
+                iconUrl: url, 
+                iconSize: [22, 36], 
+                iconAnchor: [11, 36], 
+                popupAnchor: [1, -30],
                 className: status === "nieaktywne" ? "projekt-nieaktywny" : ""
             });
         }
 
-        // Baza z przywróconymi polami personelu (Kierownik, BHP)
         const projekty = [
-            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Jan Kowalski", bhp: "Andrzej Nowak" },
-            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Wiśniewski", bhp: "Andrzej Nowak" },
-            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownik: "Tomasz Lewandowski", bhp: "Piotr Zieliński" },
-            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Krzysztof Wójcik", bhp: "Piotr Zieliński" },
-            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Marcin Kamiński", bhp: "Andrzej Nowak" },
-            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Brak aktywnych działań", bhp: "-" },
-            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór zagraniczny", bhp: "Internat. Team" },
-            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", bhp: "-" },
-            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór zagraniczny", bhp: "Internat. Team" },
-            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", bhp: "Marek Woźniak" },
-            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "Robert Mazur", bhp: "Marek Woźniak" },
-            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Logistyka MC", bhp: "Dział MC" },
-            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "Zarząd ENPROM", bhp: "Inspektor Centralny" },
-            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Nadzór Offshore", bhp: "BHP Baltic Team" },
-            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Nadzór Offshore", bhp: "BHP Baltic Team" }
+            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Jan Kowalski", telKierownik: "123456789", bhp: "Andrzej Nowak", telBhp: "987654321" },
+            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Wiśniewski", telKierownik: "234567891", bhp: "Andrzej Nowak", telBhp: "987654321" },
+            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownik: "Tomasz Lewandowski", telKierownik: "345678912", bhp: "Piotr Zieliński", telBhp: "876543219" },
+            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Krzysztof Wójcik", telKierownik: "456789123", bhp: "Piotr Zieliński", telBhp: "876543219" },
+            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Marcin Kamiński", telKierownik: "567891234", bhp: "Andrzej Nowak", telBhp: "987654321" },
+            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Brak działań", telKierownik: "", bhp: "Brak działań", telBhp: "" },
+            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198" },
+            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", telKierownik: "", bhp: "-", telBhp: "" },
+            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198" },
+            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", telKierownik: "789123456", bhp: "Marek Woźniak", telBhp: "654321987" },
+            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "Robert Mazur", telKierownik: "891234567", bhp: "Marek Woźniak", telBhp: "654321987" },
+            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Logistyka MC", telKierownik: "912345678", bhp: "Dział MC", telBhp: "543219876" },
+            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "Zarząd ENPROM", telKierownik: "223344556", bhp: "Insp. Centralny", telBhp: "334455667" },
+            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Nadzór Offshore", telKierownik: "112233445", bhp: "BHP Baltic", telBhp: "556677889" },
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Nadzór Offshore", telKierownik: "112233445", bhp: "BHP Baltic", telBhp: "556677889" }
         ];
 
         let punktyTrasy = [];
@@ -420,18 +461,31 @@
 
             let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : (projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO");
             
-            // Generowanie pełnego popupu z danymi personalnymi (Kierownik, BHP) i przyciskiem akcji
+            let linkKierownik = projekt.telKierownik ? `href="tel:${projekt.telKierownik}"` : `onclick="alert('Brak przypisanego numeru')"`;
+            let linkBhp = projekt.telBhp ? `href="tel:${projekt.telBhp}"` : `onclick="alert('Brak przypisanego numeru')"`;
+
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     <div class="status-badge status-${projekt.status}">${statusTekst}</div>
                     
-                    <div class="popup-staff-info">
-                        👤 <strong>Kierownik:</strong> ${projekt.kierownik || 'Brak danych'}<br>
-                        🦺 <strong>BHP:</strong> ${projekt.bhp || 'Brak danych'}
+                    <div class="popup-staff-grid">
+                        <a ${linkKierownik} class="staff-tile tile-kierownik">
+                            <div>
+                                <div class="tile-role">Kierownik</div>
+                                <div class="tile-name" title="${projekt.kierownik}">${projekt.kierownik}</div>
+                            </div>
+                            ${projekt.telKierownik ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
+                        </a>
+                        <a ${linkBhp} class="staff-tile tile-bhp">
+                            <div>
+                                <div class="tile-role">Nadzór BHP</div>
+                                <div class="tile-name" title="${projekt.bhp}">${projekt.bhp}</div>
+                            </div>
+                            ${projekt.telBhp ? '<div class="tile-action">📞 Zadzwoń</div>' : ''}
+                        </a>
                     </div>
 
-                    <button class="popup-btn kierownik" onclick="alert('Kontakt do nadzoru budowy: ${projekt.kierownik || 'Nie przypisano'}')">📞 Kontakt z Kierownikiem</button>
                     <button class="popup-btn btn-dodaj-punkt" onclick="dodajDoTrasyZId(${projekt.id})">➕ Dodaj do trasy</button>
                 </div>
             `;
@@ -464,7 +518,6 @@
         }
 
         function pokazOpcjeKreatora() {
-            document.getElementById('creator-title').innerText = "DODAJ KOLEJNY PUNKT TRASY:";
             document.getElementById('creator-box').style.display = 'flex';
             document.getElementById('btn-add-step').style.display = 'none';
         }
@@ -512,20 +565,17 @@
             renderujTrase();
         }
 
-        // UNIWERSALNY SYSTEM PRZECIĄGANIA DOTYKOWEGO (MYSZ + DOTYK)
         function zainicjujDragAndDrop() {
             const container = document.getElementById('tiles-container');
             const tiles = container.querySelectorAll('.route-tile');
 
             tiles.forEach(tile => {
-                // Obsługa myszy (PC)
                 tile.addEventListener('dragstart', () => tile.classList.add('dragging'));
                 tile.addEventListener('dragend', () => {
                     tile.classList.remove('dragging');
                     przebudujTablicePoPrzeciagnieciu();
                 });
 
-                // Gładka obsługa dotykowa (Smartfony)
                 tile.addEventListener('touchstart', (e) => {
                     if (e.target.classList.contains('btn-tile-delete')) return;
                     tile.classList.add('dragging');
@@ -590,8 +640,8 @@
             });
 
             punktyTrasy = nowaKolejnosc;
-            renderujTrase(false); // Blokada przerysowania DOM zapobiega ucinaniu animacji
-            renderujSameBadges(); // Natychmiast przelicza badge START / META
+            renderujTrase(false);
+            renderujSameBadges();
         }
 
         function renderujSameBadges() {
@@ -613,7 +663,6 @@
             });
         }
 
-        // RENDEROWANIE SYSTEMU
         function renderujTrase(odswiezBlokiHTML = true) {
             const container = document.getElementById('tiles-container');
             
@@ -623,7 +672,7 @@
                     let etykieta = "P" + (index + 1);
                     let dodatkowaKlasa = "";
                     if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
-                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; dodatkowaKlasa = "badge-meta"; }
+                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; Platform = "badge-meta"; dodatkowaKlasa = "badge-meta"; }
 
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
@@ -643,7 +692,6 @@
             if (punktyTrasy.length > 0) {
                 ukryjOpcjeKreatora();
             } else {
-                document.getElementById('creator-title').innerText = "WYBIERZ PUNKT POCZĄTKOWY TRASY:";
                 document.getElementById('creator-box').style.display = 'flex';
                 document.getElementById('btn-add-step').style.display = 'none';
             }
