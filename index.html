@@ -27,14 +27,14 @@
 
         /* POPUPY W KLIMACIE DARK MODE */
         .leaflet-popup-content-wrapper {
-            background: rgba(20, 20, 20, 0.98) !important;
-            border: 1px solid #444;
+            background: rgba(15, 15, 15, 0.95) !important;
+            border: 1px solid #333;
             border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
             padding: 4px;
             color: #fff;
         }
-        .leaflet-popup-tip { background: rgba(20, 20, 20, 0.98) !important; }
+        .leaflet-popup-tip { background: rgba(15, 15, 15, 0.95) !important; }
 
         .popup-container {
             text-align: center;
@@ -61,6 +61,21 @@
             border: 1px solid #444;
         }
         .status-staly { color: #ffc107; border-color: #ffc107; }
+        .status-aktywne { color: #28a745; border-color: #28a745; }
+        .status-nieaktywne { color: #ff4d4d; border-color: #ff4d4d; }
+
+        /* Dane personelu w popupie */
+        .popup-staff-info {
+            font-size: 11px;
+            color: #ccc;
+            text-align: left;
+            background: #222;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #333;
+            line-height: 1.4;
+        }
 
         .popup-btn {
             display: flex;
@@ -76,8 +91,14 @@
             border-radius: 8px;
             cursor: pointer;
             border: none;
+            width: 100%;
+            box-sizing: border-box;
         }
-        .btn-dodaj-punkt { background-color: #28a745; width: 100%; }
+        .kierownik { 
+            background-color: #0056b3; 
+            margin-bottom: 4px;
+        }
+        .btn-dodaj-punkt { background-color: #28a745; }
 
         .custom-tooltip {
             background: rgba(20, 20, 20, 0.9) !important;
@@ -103,8 +124,8 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
-            background: rgba(25, 25, 25, 0.95);
-            border: 1px solid #555;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #444;
             color: #24ff56;
             padding: 14px 26px;
             border-radius: 25px;
@@ -125,9 +146,9 @@
             transform: translateX(-50%);
             width: 94%;
             max-width: 430px;
-            background: rgba(20, 20, 20, 0.98);
-            border: 1px solid #444;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.7);
+            background: rgba(15, 15, 15, 0.98);
+            border: 1px solid #333;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
             border-radius: 20px;
             padding: 14px;
             z-index: 1000;
@@ -154,7 +175,7 @@
             position: relative;
         }
 
-        /* CZYTELNIEJSZE KAFELKI Z OBSŁUGĄ DOTYKU */
+        /* KAFELKI Z PEŁNĄ OBSŁUGĄ DOTYKU */
         .route-tile {
             display: flex;
             align-items: center;
@@ -165,10 +186,9 @@
             gap: 12px;
             user-select: none;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            touch-action: none; /* Blokuje domyślny scroll ekranu podczas przeciągania */
+            touch-action: none;
         }
 
-        /* Styl kafelka w trakcie przeciągania */
         .route-tile.dragging {
             opacity: 0.9;
             background-color: #3d2475;
@@ -191,13 +211,11 @@
             background: #111;
             padding: 4px 8px;
             border-radius: 6px;
-            color: #24ff56;
+            color: #fff;
             border: 1px solid #333;
             min-width: 35px;
             text-align: center;
         }
-        
-        /* Wyróżnienie startu i mety */
         .tile-badge.badge-start { color: #24ff56; border-color: #24ff56; }
         .tile-badge.badge-meta { color: #ff4d4d; border-color: #ff4d4d; }
 
@@ -220,7 +238,7 @@
             padding: 4px 8px;
         }
 
-        /* INTERFEJS WYBORU */
+        /* INTERFEJS WYBORU KREATORA */
         .creator-options {
             display: flex;
             flex-direction: column;
@@ -229,7 +247,7 @@
         }
 
         .btn-creator-choice {
-            background: #2a2a2a;
+            background: #222;
             border: 1px solid #444;
             color: #fff;
             padding: 12px;
@@ -242,7 +260,7 @@
             align-items: center;
             gap: 10px;
         }
-        .btn-creator-choice:active { background: #3a3a3a; }
+        .btn-creator-choice:active { background: #333; }
 
         .btn-add-next-step {
             background: rgba(111, 66, 193, 0.2);
@@ -367,22 +385,23 @@
             });
         }
 
+        // Baza z przywróconymi polami personelu (Kierownik, BHP)
         const projekty = [
-            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056 },
-            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306 },
-            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766 },
-            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056 },
-            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803 },
-            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897 },
-            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389 },
-            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278 },
-            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417 },
-            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709 },
-            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028 },
-            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463 },
-            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614 },
-            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547 },
-            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375 }
+            { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Jan Kowalski", bhp: "Andrzej Nowak" },
+            { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Wiśniewski", bhp: "Andrzej Nowak" },
+            { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "CPK", lat: 52.209911, lng: 20.475766, kierownik: "Tomasz Lewandowski", bhp: "Piotr Zieliński" },
+            { id: 4, typ: "SE", status: "aktywne", nazwa: "SE Leszno", etykieta: "Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Krzysztof Wójcik", bhp: "Piotr Zieliński" },
+            { id: 5, typ: "SE", status: "aktywne", nazwa: "SE Polkowice", etykieta: "Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Marcin Kamiński", bhp: "Andrzej Nowak" },
+            { id: 6, typ: "LN", status: "nieaktywne", nazwa: "Linia 110 kV Radzyń - Łuków", etykieta: "Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "Brak aktywnych działań", bhp: "-" },
+            { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór zagraniczny", bhp: "Internat. Team" },
+            { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", bhp: "-" },
+            { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór zagraniczny", bhp: "Internat. Team" },
+            { id: 10, typ: "LN", status: "aktywne", nazwa: "LN Demon Munstenberg", etykieta: "Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", bhp: "Marek Woźniak" },
+            { id: 11, typ: "LN", status: "aktywne", nazwa: "LN Trębaczew", etykieta: "Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "Robert Mazur", bhp: "Marek Woźniak" },
+            { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Logistyka MC", bhp: "Dział MC" },
+            { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "Zarząd ENPROM", bhp: "Inspektor Centralny" },
+            { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Nadzór Offshore", bhp: "BHP Baltic Team" },
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Nadzór Offshore", bhp: "BHP Baltic Team" }
         ];
 
         let punktyTrasy = [];
@@ -401,10 +420,18 @@
 
             let statusTekst = projekt.status === "staly" ? "📌 PUNKT STAŁY" : (projekt.status === "aktywne" ? "🟢 W REALIZACJI" : "⚠️ UKOŃCZONO");
             
+            // Generowanie pełnego popupu z danymi personalnymi (Kierownik, BHP) i przyciskiem akcji
             const popupContent = `
                 <div class="popup-container">
                     <div class="popup-title">${projekt.nazwa}</div>
                     <div class="status-badge status-${projekt.status}">${statusTekst}</div>
+                    
+                    <div class="popup-staff-info">
+                        👤 <strong>Kierownik:</strong> ${projekt.kierownik || 'Brak danych'}<br>
+                        🦺 <strong>BHP:</strong> ${projekt.bhp || 'Brak danych'}
+                    </div>
+
+                    <button class="popup-btn kierownik" onclick="alert('Kontakt do nadzoru budowy: ${projekt.kierownik || 'Nie przypisano'}')">📞 Kontakt z Kierownikiem</button>
                     <button class="popup-btn btn-dodaj-punkt" onclick="dodajDoTrasyZId(${projekt.id})">➕ Dodaj do trasy</button>
                 </div>
             `;
@@ -485,24 +512,22 @@
             renderujTrase();
         }
 
-        // NOWY, UNIWERSALNY SYSTEM DRAG & DROP (MYSZ + DOTYK NA TELEFONIE)
+        // UNIWERSALNY SYSTEM PRZECIĄGANIA DOTYKOWEGO (MYSZ + DOTYK)
         function zainicjujDragAndDrop() {
             const container = document.getElementById('tiles-container');
             const tiles = container.querySelectorAll('.route-tile');
 
             tiles.forEach(tile => {
-                // OBSŁUGA MYSZKI (DESKTOP)
+                // Obsługa myszy (PC)
                 tile.addEventListener('dragstart', () => tile.classList.add('dragging'));
                 tile.addEventListener('dragend', () => {
                     tile.classList.remove('dragging');
                     przebudujTablicePoPrzeciagnieciu();
                 });
 
-                // OBSŁUGA DOTYKU (SMARTFONY)
+                // Gładka obsługa dotykowa (Smartfony)
                 tile.addEventListener('touchstart', (e) => {
-                    // Ignorujemy dotknięcie przycisku usuwania
                     if (e.target.classList.contains('btn-tile-delete')) return;
-                    
                     tile.classList.add('dragging');
                     tile.style.position = 'relative';
                 }, { passive: true });
@@ -511,7 +536,6 @@
                     const draggingTile = container.querySelector('.route-tile.dragging');
                     if (!draggingTile) return;
 
-                    // Pobieramy pozycję palca na ekranie
                     const touch = e.touches[0];
                     const pozycjePoza = pobierzElementPozaPrzeciaganym(container, touch.clientY);
 
@@ -530,7 +554,6 @@
                 });
             });
 
-            // Rejestracja dla klasycznego dragover na PC
             container.addEventListener('dragover', e => {
                 e.preventDefault();
                 const draggingTile = document.querySelector('.dragging');
@@ -567,11 +590,10 @@
             });
 
             punktyTrasy = nowaKolejnosc;
-            renderujTrase(false); // Aktualizuj mapę bez przeładowania bloków HTML (zapobiega miganiu)
-            renderujSameBadges(); // Odśwież tylko etykiety START/META/P1...
+            renderujTrase(false); // Blokada przerysowania DOM zapobiega ucinaniu animacji
+            renderujSameBadges(); // Natychmiast przelicza badge START / META
         }
 
-        // Pomocnicza funkcja do szybkiej podmiany napisów START / META bez przebudowy drzewa DOM
         function renderujSameBadges() {
             const kafelki = document.querySelectorAll('.route-tile');
             kafelki.forEach((tile, index) => {
