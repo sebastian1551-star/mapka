@@ -416,7 +416,7 @@
         // FUNKCJA GENERUJĄCA IKONĘ Z UWZGLĘDNIENIEM STYLU DLA PROJEKTÓW NIEAKTYWNYCH
         function stworzIkone(typ, status) {
             let url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png";
-            if (typ === "SE") url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
+            if (typ === "SE" || typ === "UW") url = "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png";
             
             return L.icon({
                 iconUrl: url, 
@@ -442,7 +442,10 @@
             { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "Logistyka MC", telKierownik: "912345678", bhp: "Dział MC", telBhp: "543219876" },
             { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "Zarząd ENPROM", telKierownik: "223344556", bhp: "Insp. Centralny", telBhp: "334455667" },
             { id: 14, typ: "WF", status: "aktywne", nazwa: "Baltic Power", etykieta: "Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Nadzór Offshore", telKierownik: "112233445", bhp: "BHP Baltic", telBhp: "556677889" },
-            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Nadzór Offshore", telKierownik: "112233445", bhp: "BHP Baltic", telBhp: "556677889" }
+            { id: 15, typ: "WF", status: "aktywne", nazwa: "Bałtyk II&III", etykieta: "Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Nadzór Offshore", telKierownik: "112233445", bhp: "BHP Baltic", telBhp: "556677889" },
+            // NOWE LOKALIZACJE BEZ KIEROWNIKA I BHP
+            { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Brak przypisania", telKierownik: "", bhp: "Brak przypisania", telBhp: "" },
+            { id: 17, typ: "UW", status: "aktywne", nazwa: "UW Melsdorf", etykieta: "Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Brak przypisania", telKierownik: "", bhp: "Brak przypisania", telBhp: "" }
         ];
 
         let punktyTrasy = [];
@@ -672,7 +675,7 @@
                     let etykieta = "P" + (index + 1);
                     let dodatkowaKlasa = "";
                     if (index === 0) { etykieta = "START"; dodatkowaKlasa = "badge-start"; }
-                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; Platform = "badge-meta"; dodatkowaKlasa = "badge-meta"; }
+                    if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) { etykieta = "META"; dodatkowaKlasa = "badge-meta"; }
 
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
