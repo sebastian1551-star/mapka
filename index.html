@@ -277,6 +277,10 @@
         <div style="font-size:10px; color:#aaa; margin-bottom:6px; font-weight:bold; text-align:center;">
             👇 DOTKNIJ PUNKT NA MAPIE, ABY GO DODAĆ DO TRASY 👇
         </div>
+
+        <button class="btn-loc" id="btn-add-me" onclick="dodajMojaLokalizacje()" style="width: 100%; margin-bottom: 10px; padding: 10px; background: #24ff56; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: black;">
+    📍 Start z mojej lokalizacji
+        </button>
         
         <div class="route-tiles-scroll" id="tiles-container"></div>
 
@@ -574,6 +578,28 @@ function renderujPanel() {
                     <span class="dist" style="color: #24ff56;">${dystans}</span>
                 </div>`;
     }).join('');
+}
+        function dodajMojaLokalizacje() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const mojaLokalizacja = {
+                id: "me_" + Date.now(),
+                nazwa: "Moja Lokalizacja",
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude
+            };
+
+            // Sprawdzenie czy punkt już jest w tablicy (blokada duplikatów)
+            if (!punktyTrasy.some(p => p.nazwa === "Moja Lokalizacja")) {
+                punktyTrasy.unshift(mojaLokalizacja); // Dodaje na sam początek
+                renderujTrase();
+            }
+        }, (err) => {
+            alert("Nie można pobrać lokalizacji. Włącz GPS/Zezwól na lokalizację.");
+        });
+    } else {
+        alert("Twoja przeglądarka nie wspiera geolokalizacji.");
+    }
 }
     </script>
 </body>
