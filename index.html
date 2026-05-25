@@ -535,6 +535,32 @@
         }
 
         if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
+
+        // --- DOKLEJ TO POD BAZĄ DANYCH ---
+
+let mojaPozycja = null;
+
+// Pobieranie Twojej lokalizacji
+if (navigator.geolocation) {
+    navigator.geolocation.watchPosition((pos) => {
+        mojaPozycja = L.latLng(pos.coords.latitude, pos.coords.longitude);
+        // Opcjonalnie: dodaj marker Twojej pozycji na mapie
+        L.circleMarker(mojaPozycja, {radius: 8, color: '#24ff56', fillColor: '#fff', fillOpacity: 1})
+         .addTo(map).bindPopup("Tu jesteś");
+    });
+}
+
+// Funkcja obliczająca dystans do poprawy wyświetlania w panelu
+function renderujPanel() {
+    const kontener = document.getElementById('lista-trasy');
+    kontener.innerHTML = trasa.map(p => {
+        let dystans = mojaPozycja ? (mojaPozycja.distanceTo([p.lat, p.lng]) / 1000).toFixed(1) + " km" : "--";
+        return `<div class="item">
+                    <span>${p.nazwa}</span> 
+                    <span class="dist" style="color: #24ff56;">${dystans}</span>
+                </div>`;
+    }).join('');
+}
     </script>
 </body>
 </html>
