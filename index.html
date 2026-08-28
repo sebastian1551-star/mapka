@@ -77,23 +77,30 @@
         .pin-wf { background: #17c9c9; }
         .pin-staly { background: #7c5cff; }
 
-        /* --- ETYKIETY --- */
+        /* --- ETYKIETY (nowoczesne "pigułki") --- */
         .map-label-centered {
             background: none !important;
             border: none !important;
             box-shadow: none !important;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 12px;
             text-align: center;
-            white-space: nowrap;
             pointer-events: none;
-            text-shadow:
-                -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000,
-                -1.5px  1.5px 0 #000, 1.5px  1.5px 0 #000,
-                0 2px 5px rgba(0,0,0,0.9);
         }
-        .map-label-centered.label-nieaktywna { opacity: 0.45; }
+        .label-pill {
+            display: inline-block;
+            background: rgba(13, 13, 16, 0.82);
+            border: 1px solid rgba(255,255,255,0.09);
+            color: #f4f4f6;
+            font-weight: 600;
+            font-size: 11.5px;
+            letter-spacing: .01em;
+            padding: 3.5px 9px;
+            border-radius: 7px;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .map-label-centered.label-nieaktywna .label-pill { opacity: 0.5; }
 
         /* --- TOP BAR / LEGENDA --- */
         #top-bar {
@@ -354,23 +361,28 @@
         .panel-distance {
             font-size: 13px;
             font-weight: 700;
-            color: #fff;
-            background: linear-gradient(135deg, var(--accent-2), #5c3fd9);
-            margin-bottom: 6px;
-            padding: 11px;
-            border-radius: 10px;
+            color: var(--text);
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            padding: 12px;
+            border-radius: 12px;
             text-align: center;
         }
+        .panel-distance strong { color: var(--accent-2); }
 
         .btn-go-route {
-            background: #1f9d4b;
-            color: white;
+            background: var(--accent);
+            color: #06210f;
             text-align: center;
             padding: 13px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 700;
             text-decoration: none;
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
             font-size: 13.5px;
         }
         .btn-go-route:active { filter: brightness(0.92); }
@@ -480,7 +492,7 @@
         <div class="route-tiles-scroll" id="tiles-container"></div>
 
         <div class="panel-distance" id="route-distance">Kliknij punkt na mapie...</div>
-        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">🚗 Uruchom nawigację w Google Maps</a>
+        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">Otwórz trasę w Mapach Google <span style="font-size:15px;">↗</span></a>
         <button class="btn-clear-route" onclick="zamknijIResetuj()">❌ Zamknij / Resetuj planer</button>
     </div>
 
@@ -580,9 +592,9 @@
             const label = L.marker([projekt.lat, projekt.lng], {
                 icon: L.divIcon({
                     className: `map-label-centered ${projekt.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
-                    html: `<div>${tekstEtykiety}</div>`,
-                    iconAnchor: [75, -6],
-                    iconSize: [150, 16]
+                    html: `<div class="label-pill">${tekstEtykiety}</div>`,
+                    iconAnchor: [75, -8],
+                    iconSize: [150, 18]
                 }),
                 interactive: false
             }).addTo(map);
@@ -590,6 +602,62 @@
         });
 
         if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
+
+        // ---------------------------------------------------------------
+        // DOWOLNY PUNKT NA MAPIE (klik/dotknięcie poza istniejącym markerem)
+        // ---------------------------------------------------------------
+        const customMarkers = {};
+
+        map.on('click', function (e) {
+            dodajPunktNiestandardowy(e.latlng);
+        });
+
+        function dodajPunktNiestandardowy(latlng) {
+            const customId = "custom_" + Date.now();
+            const tymczasowaNazwa = `Punkt (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+
+            const marker = L.circleMarker(latlng, {
+                radius: 9,
+                color: '#fff',
+                weight: 2,
+                fillColor: '#7c5cff',
+                fillOpacity: 0.95
+            }).addTo(map);
+            marker.bindTooltip("📍 Punkt niestandardowy", { direction: 'top', offset: [0, -10], className: 'custom-tooltip' });
+            customMarkers[customId] = marker;
+
+            punktyTrasy.push({
+                id: customId,
+                dbId: null,
+                nazwa: tymczasowaNazwa,
+                lat: latlng.lat,
+                lng: latlng.lng,
+                kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: ""
+            });
+
+            if (!document.getElementById('route-panel').classList.contains('active')) {
+                otworzPlaner();
+            } else {
+                renderujTrase();
+            }
+
+            // Rewers-geokodowanie nazwy miejsca (Nominatim / OpenStreetMap, bez klucza API)
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=14`, {
+                headers: { 'Accept-Language': 'pl' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    const punkt = punktyTrasy.find(p => p.id === customId);
+                    if (!punkt) return;
+                    const a = data.address || {};
+                    const czytelnaNazwa = a.village || a.town || a.city || a.suburb || a.county || (data.display_name ? data.display_name.split(',')[0] : null);
+                    if (czytelnaNazwa) {
+                        punkt.nazwa = "📍 " + czytelnaNazwa;
+                        renderujTrase();
+                    }
+                })
+                .catch(() => {});
+        }
 
         // ---------------------------------------------------------------
         // WYSZUKIWARKA / FILTR
@@ -670,6 +738,11 @@
         }
 
         function usunPunkt(index) {
+            const punkt = punktyTrasy[index];
+            if (punkt && customMarkers[punkt.id]) {
+                map.removeLayer(customMarkers[punkt.id]);
+                delete customMarkers[punkt.id];
+            }
             punktyTrasy.splice(index, 1);
             renderujTrase();
         }
@@ -733,7 +806,8 @@
                     const tile = document.createElement('div');
                     tile.className = "route-tile";
                     tile.setAttribute('data-id', punkt.id);
-                    const staffRowHtml = punkt.dbId === "me" ? "" : `<div class="tile-staff-row">${pmHtml}${bhpHtml}</div>${mailHtml ? `<div class="tile-staff-row">${mailHtml}</div>` : ""}`;
+                    const brakDanychKontaktowych = !punkt.telKierownik && !punkt.telBhp && !punkt.mail && (!punkt.kierownik || punkt.kierownik === "Brak") && (!punkt.bhp || punkt.bhp === "Brak");
+                    const staffRowHtml = brakDanychKontaktowych ? "" : `<div class="tile-staff-row">${pmHtml}${bhpHtml}</div>${mailHtml ? `<div class="tile-staff-row">${mailHtml}</div>` : ""}`;
                     tile.innerHTML = `
                         <div class="tile-main-row">
                             <span class="tile-drag-handle">☰</span>
@@ -767,7 +841,7 @@
                             const trasa = data.routes[0];
                             const m = Math.round(trasa.duration / 60);
                             const h = Math.floor(m / 60);
-                            distanceText.innerHTML = `🚗 Razem: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> (ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>)`;
+                            distanceText.innerHTML = `Razem: <strong>${(trasa.distance / 1000).toFixed(1)} km</strong> · ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>`;
                             liniaTrasy = L.polyline(trasa.geometry.coordinates.map(c => [c[1], c[0]]), {
                                 color: '#7c5cff', weight: 5, opacity: 0.9
                             }).addTo(map);
@@ -791,6 +865,7 @@
         }
 
         function zamknijIResetuj() {
+            Object.keys(customMarkers).forEach(id => { map.removeLayer(customMarkers[id]); delete customMarkers[id]; });
             punktyTrasy = [];
             if (liniaTrasy) map.removeLayer(liniaTrasy);
             document.getElementById('route-panel').classList.remove('active');
