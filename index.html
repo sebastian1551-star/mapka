@@ -49,6 +49,9 @@
 
         .leaflet-container { background: #0a0a0c; }
 
+        /* Delikatne przyciemnienie kafli mapy, żeby lepiej komponowały się z ciemnym UI */
+        .leaflet-tile-pane { filter: brightness(0.92) contrast(1.05); }
+
         /* --- STATUSY MARKERÓW --- */
         .projekt-nieaktywny { opacity: 0.32 !important; filter: grayscale(100%) brightness(0.75); }
         .projekt-staly { filter: hue-rotate(190deg) saturate(1.4); }
@@ -62,7 +65,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.55);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.65), 0 0 0 3px rgba(255,255,255,0.04);
+            transition: transform 0.15s ease;
         }
         .marker-pin .marker-glyph {
             transform: rotate(45deg);
@@ -76,6 +80,23 @@
         .pin-uw { background: #ffb020; }
         .pin-wf { background: #17c9c9; }
         .pin-staly { background: #7c5cff; }
+
+        /* --- KLASTRY MARKERÓW --- */
+        .cluster-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 32% 30%, #2a2a32, #131316 72%);
+            border: 2px solid var(--accent-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f2f2f4;
+            font-weight: 800;
+            font-size: 13px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 0 4px rgba(124,92,255,0.12);
+        }
+        .cluster-pin.cluster-lg { border-color: var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 0 4px rgba(43,227,111,0.14); }
 
         /* --- ETYKIETY (nowoczesne "pigułki") --- */
         .map-label-centered {
@@ -371,7 +392,14 @@
         }
         .panel-distance strong { color: var(--accent-2); }
 
+        /* --- WIERSZ AKCJI TRASY (otwórz / kopiuj / udostępnij) --- */
+        .route-actions-row {
+            display: flex;
+            gap: 8px;
+        }
+
         .btn-go-route {
+            flex: 1;
             background: var(--accent);
             color: #06210f;
             text-align: center;
@@ -386,6 +414,27 @@
             font-size: 13.5px;
         }
         .btn-go-route:active { filter: brightness(0.92); }
+
+        .btn-icon-action {
+            width: 48px;
+            flex-shrink: 0;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+        .btn-icon-action:active { filter: brightness(0.92); }
+        .btn-icon-action.copied {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #06210f;
+        }
 
         .btn-clear-route {
             background: none;
@@ -474,6 +523,9 @@
         <h4>Status</h4>
         <div class="legend-row"><span class="legend-swatch" style="background:#ccc;"></span> Aktywny</div>
         <div class="legend-row"><span class="legend-swatch" style="background:#666; opacity:.5;"></span> Nieaktywny</div>
+        <div class="legend-sep"></div>
+        <h4>Grupowanie</h4>
+        <div class="legend-row"><span class="legend-dot" style="background:#131316; border-color:#7c5cff;"></span> Klaster punktów (liczba w kółku)</div>
     </div>
 
     <button id="btn-trigger-plan" onclick="otworzPlaner()">🗺️ Wyznacz trasę <span id="route-count-badge">0</span></button>
@@ -492,7 +544,13 @@
         <div class="route-tiles-scroll" id="tiles-container"></div>
 
         <div class="panel-distance" id="route-distance">Kliknij punkt na mapie...</div>
-        <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">Otwórz trasę w Mapach Google <span style="font-size:15px;">↗</span></a>
+
+        <div class="route-actions-row">
+            <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">Otwórz trasę w Mapach Google <span style="font-size:15px;">↗</span></a>
+            <button class="btn-icon-action" id="btn-copy-route" style="display:none;" onclick="skopiujLinkTrasy()" title="Kopiuj link do schowka">📋</button>
+            <button class="btn-icon-action" id="btn-share-route" style="display:none;" onclick="udostepnijTrase()" title="Udostępnij trasę">📤</button>
+        </div>
+
         <button class="btn-clear-route" onclick="zamknijIResetuj()">❌ Zamknij / Resetuj planer</button>
     </div>
 
@@ -500,10 +558,11 @@
         const map = L.map('map', { zoomSnap: 0.5, zoomControl: false }).setView([52.0, 19.0], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19,
-            subdomains: 'abc'
+        // Ciemne kafle mapy (CARTO Dark Matter) - lepiej komponują się z ciemnym motywem interfejsu
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
         }).addTo(map);
 
         // ---------------------------------------------------------------
@@ -535,7 +594,7 @@
             { id: 23, typ: "LN", status: "aktywne", nazwa: "LN Trzebienia", etykieta: "250415 Trzebinia", lat: 50.155272, lng: 19.463796, kierownik: "Vitali Aviaruk", telKierownik: "+48533306948", bhp: "-", telBhp: "", mail: "" },
             { id: 24, typ: "LN", status: "aktywne", nazwa: "LN Chełm", etykieta: "250147 Chełm", lat: 51.146126, lng: 23.502189, kierownik: "", telKierownik: "", bhp: "-", telBhp: "", mail: "" },
             { id: 25, typ: "SE", status: "aktywne", nazwa: "SE Żarnowiec 400kv", etykieta: "250671 Magazyn Żarnowiec", lat: 54.744423, lng: 18.095927, kierownik: "Bartłomiej Buczyński", telKierownik: "+48533350667", bhp: "-", telBhp: "", mail: "" },
-            { id: 26, typ: "SE", status: "nieaktywne", nazwa: "250918 Mühlenbeck (Varsov)", etykieta: "250918 Mühlenbeck (Varsov)", lat: 53.542905, lng: 11.282758, kierownik: "Gabriel Grzonka", telKierownik: "", bhp: "Monika Sulka", telBhp: "+49 157 867 782 89", mail: "" },
+            { id: 26, typ: "SE", status: "aktywne", nazwa: "250918 Mühlenbeck (Varsov)", etykieta: "250918 Mühlenbeck (Varsov)", lat: 53.542905, lng: 11.282758, kierownik: "Gabriel Grzonka", telKierownik: "", bhp: "Monika Sulka", telBhp: "+49 157 867 782 89", mail: "" },
             { id: 27, typ: "LE", status: "aktywne", nazwa: "400 KV Żydowo", etykieta: "260965 Dunowo-Żydowo", lat: 53.56384, lng: 16.34325, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
             { id: 29, typ: "LN", status: "aktywne", nazwa: "Pokój-Namysłów 110kv", etykieta: "Pokój-Namysłów 110kv", lat: 50.918390, lng: 17.830409, kierownik: "Sebastian Kędra", telKierownik: "533350527", bhp: "", telBhp: "", mail: "" },
             { id: 30, typ: "LN", status: "aktywne", nazwa: "SE JEDLICZE", etykieta: "220919 SE JEDLICZE", lat: 49.711281, lng: 21.655624, kierownik: "Mateusz Podsiadło", telKierownik: "504561609", bhp: "", telBhp: "", mail: "" }
@@ -544,7 +603,6 @@
         const KOLORY_TYP = { LN: "#2f6df6", SE: "#2be36f", UW: "#ffb020", WF: "#17c9c9", LE: "#2f6df6" };
 
         function stworzIkone(projekt) {
-            const kolorKlasa = projekt.status === "staly" ? "pin-staly" : (KOLORY_TYP[projekt.typ] ? "" : "pin-ln");
             const kolor = projekt.status === "staly" ? "#7c5cff" : (KOLORY_TYP[projekt.typ] || "#2f6df6");
             const glyph = projekt.typ;
             const html = `<div class="marker-pin" style="background:${kolor};"><div class="marker-glyph">${glyph}</div></div>`;
@@ -563,6 +621,27 @@
         const markerRefs = {};
         const labelRefs = {};
 
+        // Grupa klastrująca markery projektów - poprawia czytelność mapy przy wielu punktach
+        const clusterGroup = L.markerClusterGroup({
+            maxClusterRadius: 55,
+            disableClusteringAtZoom: 10,
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            iconCreateFunction: function (cluster) {
+                const count = cluster.getChildCount();
+                const duzy = count >= 8 ? "cluster-lg" : "";
+                return L.divIcon({
+                    html: `<div class="cluster-pin ${duzy}"><span>${count}</span></div>`,
+                    className: "",
+                    iconSize: [40, 40]
+                });
+            }
+        });
+        map.addLayer(clusterGroup);
+
+        // Grupa etykiet - ukrywana przy dużym oddaleniu, żeby nie zaśmiecać mapy razem z klastrami
+        const labelsGroup = L.layerGroup().addTo(map);
+
         function budujDymekHtml(projekt) {
             const pm = projekt.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${projekt.kierownik}${projekt.telKierownik ? ' · <a href="tel:' + projekt.telKierownik + '">' + projekt.telKierownik + '</a>' : ''}</div>` : "";
             const bhp = projekt.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${projekt.bhp}${projekt.telBhp ? ' · <a href="tel:' + projekt.telBhp + '">' + projekt.telBhp + '</a>' : ''}</div>` : "";
@@ -576,7 +655,7 @@
 
             const marker = L.marker([projekt.lat, projekt.lng], {
                 icon: stworzIkone(projekt)
-            }).addTo(map);
+            });
 
             marker.bindTooltip(budujDymekHtml(projekt), {
                 direction: 'top',
@@ -586,6 +665,7 @@
                 className: 'custom-tooltip'
             });
             marker.on('click', function () { dodajDoTrasyZId(projekt.id); marker.closeTooltip(); });
+            clusterGroup.addLayer(marker);
             markerRefs[projekt.id] = marker;
 
             const tekstEtykiety = (projekt.status === "staly" || projekt.typ === "WF") ? projekt.etykieta : `${projekt.typ}: ${projekt.etykieta}`;
@@ -598,11 +678,23 @@
                     iconSize: [150, 18]
                 }),
                 interactive: false
-            }).addTo(map);
+            });
+            labelsGroup.addLayer(label);
             labelRefs[projekt.id] = label;
         });
 
         if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
+
+        // Etykiety chowają się przy dużym oddaleniu (gdy działają klastry), żeby mapa była czytelna
+        function aktualizujWidocznoscEtykiet() {
+            if (map.getZoom() < 7) {
+                if (map.hasLayer(labelsGroup)) map.removeLayer(labelsGroup);
+            } else {
+                if (!map.hasLayer(labelsGroup)) labelsGroup.addTo(map);
+            }
+        }
+        map.on('zoomend', aktualizujWidocznoscEtykiet);
+        aktualizujWidocznoscEtykiet();
 
         // ---------------------------------------------------------------
         // DOWOLNY PUNKT NA MAPIE (klik/dotknięcie poza istniejącym markerem)
@@ -667,11 +759,15 @@
             const q = zapytanie.trim().toLowerCase();
             projekty.forEach(p => {
                 const pasuje = !q || p.nazwa.toLowerCase().includes(q) || p.etykieta.toLowerCase().includes(q) || p.typ.toLowerCase().includes(q);
-                const elMarker = markerRefs[p.id].getElement();
+                const marker = markerRefs[p.id];
                 const elLabel = labelRefs[p.id].getElement();
-                const widocznosc = pasuje ? "" : "none";
-                if (elMarker) elMarker.style.display = widocznosc;
-                if (elLabel) elLabel.style.display = widocznosc;
+
+                if (pasuje) {
+                    if (!clusterGroup.hasLayer(marker)) clusterGroup.addLayer(marker);
+                } else {
+                    if (clusterGroup.hasLayer(marker)) clusterGroup.removeLayer(marker);
+                }
+                if (elLabel) elLabel.style.display = pasuje ? "" : "none";
             });
         }
 
@@ -829,6 +925,8 @@
         function przeliczTraseFetch() {
             const distanceText = document.getElementById('route-distance');
             const googleLink = document.getElementById('btn-google-maps');
+            const copyBtn = document.getElementById('btn-copy-route');
+            const shareBtn = document.getElementById('btn-share-route');
 
             if (punktyTrasy.length >= 2) {
                 distanceText.innerHTML = `⏳ Kalkulowanie drogi OSRM...`;
@@ -857,12 +955,63 @@
                 const waypoints = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
 
                 googleLink.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? '&waypoints=' + waypoints : ''}&travelmode=driving`;
-                googleLink.style.display = "block";
+                googleLink.style.display = "flex";
+                copyBtn.style.display = "flex";
+                shareBtn.style.display = (navigator.share ? "flex" : "none");
             } else {
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
                 distanceText.innerHTML = punktyTrasy.length === 1 ? `Wskaż kolejny punkt na mapie...` : `Kliknij punkt na mapie, by zacząć...`;
                 googleLink.style.display = "none";
+                copyBtn.style.display = "none";
+                shareBtn.style.display = "none";
             }
+        }
+
+        // Kopiowanie linku trasy Google Maps do schowka - z wizualnym potwierdzeniem
+        function skopiujLinkTrasy() {
+            const googleLink = document.getElementById('btn-google-maps');
+            const copyBtn = document.getElementById('btn-copy-route');
+            const url = googleLink.href;
+            if (!url) return;
+
+            const pokazSukces = () => {
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = '✅';
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = '📋';
+                }, 1600);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(pokazSukces).catch(() => kopiujFallback(url, pokazSukces));
+            } else {
+                kopiujFallback(url, pokazSukces);
+            }
+        }
+
+        function kopiujFallback(text, callback) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); callback(); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        // Udostępnianie trasy przez natywny panel systemowy (jeśli dostępny w przeglądarce)
+        function udostepnijTrase() {
+            const googleLink = document.getElementById('btn-google-maps');
+            const url = googleLink.href;
+            if (!url || !navigator.share) return;
+            navigator.share({
+                title: 'Trasa ENPROM',
+                text: `Trasa (${punktyTrasy.length} punktów) wyznaczona w mapie projektów ENPROM`,
+                url: url
+            }).catch(() => {});
         }
 
         function zamknijIResetuj() {
