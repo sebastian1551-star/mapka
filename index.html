@@ -49,8 +49,25 @@
 
         .leaflet-container { background: #0a0a0c; }
 
-        /* Delikatne przyciemnienie kafli mapy, żeby lepiej komponowały się z ciemnym UI */
-        .leaflet-tile-pane { filter: brightness(0.92) contrast(1.05); }
+        /* --- PRZEŁĄCZNIK WARSTW MAPY (bez klucza API) --- */
+        .leaflet-control-layers {
+            background: rgba(20,20,24,0.97) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            color: var(--text) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+            padding: 6px 4px !important;
+        }
+        .leaflet-control-layers-toggle {
+            background-color: rgba(20,20,24,0.97) !important;
+            border-radius: 10px !important;
+            width: 38px !important;
+            height: 38px !important;
+        }
+        .leaflet-control-layers-expanded { padding: 10px 12px !important; }
+        .leaflet-control-layers label { color: var(--text) !important; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; }
+        .leaflet-control-layers-selector { margin-right: 6px !important; }
+        .leaflet-control-layers-separator { border-top: 1px solid var(--border) !important; margin: 6px 0 !important; }
 
         /* --- STATUSY MARKERÓW --- */
         .projekt-nieaktywny { opacity: 0.32 !important; filter: grayscale(100%) brightness(0.75); }
@@ -392,49 +409,126 @@
         }
         .panel-distance strong { color: var(--accent-2); }
 
-        /* --- WIERSZ AKCJI TRASY (otwórz / kopiuj / udostępnij) --- */
-        .route-actions-row {
+        /* --- DUŻY, WIDOCZNY BOX Z LINKIEM (na górze panelu trasy) --- */
+        .route-link-box {
+            display: none;
+            background: linear-gradient(135deg, rgba(43,227,111,0.14), rgba(124,92,255,0.12));
+            border: 1.5px solid var(--accent);
+            border-radius: 16px;
+            padding: 12px 12px 13px 12px;
+            margin-bottom: 10px;
+        }
+        .route-link-box.active { display: block; }
+
+        .route-link-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            margin-bottom: 7px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .route-link-url {
+            font-size: 11px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: var(--text-dim);
+            background: rgba(0,0,0,0.28);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 9px;
+            padding: 8px 10px;
+            margin-bottom: 9px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .route-link-buttons {
             display: flex;
             gap: 8px;
         }
 
-        .btn-go-route {
-            flex: 1;
+        .btn-copy-big {
+            width: 100%;
             background: var(--accent);
             color: #06210f;
-            text-align: center;
-            padding: 13px;
-            border-radius: 12px;
-            font-weight: 700;
-            text-decoration: none;
+            border: none;
+            border-radius: 13px;
+            padding: 15px 10px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: 13.5px;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(43,227,111,0.25);
+            box-sizing: border-box;
         }
-        .btn-go-route:active { filter: brightness(0.92); }
+        .btn-copy-big:active { filter: brightness(0.92); }
+        .btn-copy-big.copied {
+            background: var(--accent-2);
+            color: #fff;
+            box-shadow: 0 3px 10px rgba(124,92,255,0.3);
+        }
+
+        .route-link-buttons { margin-top: 8px; }
+
+        #btn-exit-focus {
+            position: absolute;
+            top: max(64px, calc(env(safe-area-inset-top) + 64px));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 998;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,176,32,0.16);
+            border: 1px solid #ffb020;
+            color: #ffb020;
+            padding: 9px 16px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        #btn-exit-focus:active { filter: brightness(0.9); }
+
+        .tooltip-kml-row { display: flex; gap: 6px; margin-top: 8px; }
+        .tooltip-kml-btn {
+            flex: 1;
+            background: #1f1f24;
+            border: 1px solid #34343c;
+            color: #f2f2f4;
+            border-radius: 8px;
+            padding: 6px 4px;
+            font-size: 10.5px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+        }
+        .tooltip-kml-btn.przebieg { color: #ffb020; border-color: #4a3a1f; }
 
         .btn-icon-action {
             width: 48px;
             flex-shrink: 0;
             background: var(--panel-2);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 13px;
             color: var(--text);
-            font-size: 17px;
+            font-size: 18px;
             cursor: pointer;
+            text-decoration: none;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
         .btn-icon-action:active { filter: brightness(0.92); }
-        .btn-icon-action.copied {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #06210f;
-        }
 
         .btn-clear-route {
             background: none;
@@ -468,6 +562,7 @@
             max-width: 240px;
             white-space: normal;
             transition: opacity .12s ease;
+            pointer-events: auto;
         }
         .leaflet-tooltip.custom-tooltip.leaflet-tooltip-top:before {
             border-top-color: var(--panel);
@@ -526,7 +621,15 @@
         <div class="legend-sep"></div>
         <h4>Grupowanie</h4>
         <div class="legend-row"><span class="legend-dot" style="background:#131316; border-color:#7c5cff;"></span> Klaster punktów (liczba w kółku)</div>
+        <div class="legend-sep"></div>
+        <h4>Przebieg (KML)</h4>
+        <div class="legend-row"><span class="legend-swatch" style="background:#ffb020;"></span> Wgrana linia trasy</div>
     </div>
+
+    <button id="btn-exit-focus" onclick="wyjdzZFokusu()">⬅ Pokaż wszystkie projekty</button>
+
+    <input type="file" id="kml-file-input" accept=".kml" style="display:none;">
+
 
     <button id="btn-trigger-plan" onclick="otworzPlaner()">🗺️ Wyznacz trasę <span id="route-count-badge">0</span></button>
 
@@ -535,6 +638,18 @@
             <span class="panel-title">Planer trasy</span>
             <button class="btn-tile-delete" style="font-size:20px;" onclick="zamknijIResetuj()">✖</button>
         </div>
+        <div class="route-link-box" id="route-link-box">
+            <div class="route-link-label" id="route-link-label">🔗 Link</div>
+            <div class="route-link-url" id="route-link-url">—</div>
+            <button class="btn-copy-big" id="btn-copy-route" onclick="skopiujLinkTrasy()">📋 Kopiuj link</button>
+            <div class="route-link-buttons" style="display:flex; gap:8px;">
+                <a href="#" target="_blank" class="btn-icon-action" id="btn-open-route" title="Otwórz w Mapach Google">↗</a>
+                <button class="btn-icon-action" id="btn-share-route" style="display:none;" onclick="udostepnijTrase()" title="Udostępnij (system)">📤</button>
+                <button class="btn-icon-action" onclick="udostepnijOutlook()" title="Wyślij mailem (Outlook)">✉️</button>
+                <button class="btn-icon-action" onclick="udostepnijTeams()" title="Udostępnij w Teams">👥</button>
+            </div>
+        </div>
+
         <div class="panel-hint">👇 DOTKNIJ DOWOLNY PUNKT NA MAPIE, ABY DODAĆ GO DO TRASY 👇</div>
 
         <button class="btn-loc" id="btn-add-me" onclick="dodajMojaLokalizacje()">
@@ -545,12 +660,6 @@
 
         <div class="panel-distance" id="route-distance">Kliknij punkt na mapie...</div>
 
-        <div class="route-actions-row">
-            <a href="#" target="_blank" class="btn-go-route" id="btn-google-maps" style="display:none;">Otwórz trasę w Mapach Google <span style="font-size:15px;">↗</span></a>
-            <button class="btn-icon-action" id="btn-copy-route" style="display:none;" onclick="skopiujLinkTrasy()" title="Kopiuj link do schowka">📋</button>
-            <button class="btn-icon-action" id="btn-share-route" style="display:none;" onclick="udostepnijTrase()" title="Udostępnij trasę">📤</button>
-        </div>
-
         <button class="btn-clear-route" onclick="zamknijIResetuj()">❌ Zamknij / Resetuj planer</button>
     </div>
 
@@ -558,12 +667,53 @@
         const map = L.map('map', { zoomSnap: 0.5, zoomControl: false }).setView([52.0, 19.0], 6);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Ciemne kafle mapy (CARTO Dark Matter) - lepiej komponują się z ciemnym motywem interfejsu
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // --- WARSTWY MAPY (wszystkie darmowe, bez klucza API) ---
+        // Standardowy OpenStreetMap - najbardziej niezawodny, kolorowy, ustawiony jako domyślny
+        const warstwaOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            subdomains: 'abc',
+            maxZoom: 19
+        });
+
+        // CARTO Voyager - kolorowa, nowocześniejsza stylistyka, bez klucza API
+        const warstwaVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO',
             subdomains: 'abcd',
             maxZoom: 20
-        }).addTo(map);
+        });
+
+        // OpenTopoMap - kolorowa mapa topograficzna, przydatna w terenie
+        const warstwaTopo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)',
+            subdomains: 'abc',
+            maxZoom: 17
+        });
+
+        // CARTO Positron - jasna, minimalistyczna, dobra czytelność etykiet
+        const warstwaJasna = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        });
+
+        // CARTO Dark Matter - ciemna, opcjonalna
+        const warstwaCiemna = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
+        });
+
+        warstwaOSM.addTo(map);
+
+        const warstwyBazowe = {
+            "🗺️ OpenStreetMap": warstwaOSM,
+            "🎨 CARTO Voyager": warstwaVoyager,
+            "⛰️ OpenTopoMap": warstwaTopo,
+            "⚪ Jasna (Positron)": warstwaJasna,
+            "⚫ Ciemna (Dark Matter)": warstwaCiemna
+        };
+
+        L.control.layers(warstwyBazowe, null, { position: 'bottomleft', collapsed: true }).addTo(map);
 
         // ---------------------------------------------------------------
         // BAZA PROJEKTÓW (żadna lokalizacja z oryginału nie została usunięta)
@@ -642,12 +792,26 @@
         // Grupa etykiet - ukrywana przy dużym oddaleniu, żeby nie zaśmiecać mapy razem z klastrami
         const labelsGroup = L.layerGroup().addTo(map);
 
+        // --- PRZEBIEGI (KML) I TRYB "TYLKO TEN OBIEKT" ---
+        // Adres bazowy do surowych plików w repo GitHub, np.:
+        // https://raw.githubusercontent.com/TWOJ-LOGIN/TWOJE-REPO/main/kml/
+        // Pliki muszą nazywać się <id_projektu>.kml, np. dla Trębaczewa (id 11) -> 11.kml
+        const KML_REPO_BASE = "https://raw.githubusercontent.com/TWOJ-LOGIN/TWOJE-REPO/main/kml/";
+
+        const liniePrzebiegu = {};   // id projektu -> L.polyline (linia z KML)
+        const punktyKmlGroup = {};   // id projektu -> L.layerGroup (pojedyncze punkty z KML)
+        let trybFokusAktywny = null; // { id, marker, linia, punktyKml }
+
         function budujDymekHtml(projekt) {
             const pm = projekt.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${projekt.kierownik}${projekt.telKierownik ? ' · <a href="tel:' + projekt.telKierownik + '">' + projekt.telKierownik + '</a>' : ''}</div>` : "";
             const bhp = projekt.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${projekt.bhp}${projekt.telBhp ? ' · <a href="tel:' + projekt.telBhp + '">' + projekt.telBhp + '</a>' : ''}</div>` : "";
             const mail = projekt.mail ? `<div class="tooltip-row">✉️ <a href="mailto:${projekt.mail}">${projekt.mail}</a></div>` : "";
             const status = projekt.status === "nieaktywne" ? '<span class="tooltip-status status-off">nieaktywny</span>' : (projekt.status === "staly" ? '<span class="tooltip-status status-fix">punkt stały</span>' : '<span class="tooltip-status status-on">aktywny</span>');
-            return `<div class="tooltip-title">${projekt.nazwa}</div>${status}${pm}${bhp}${mail}<div class="tooltip-hint">👆 dotknij, aby dodać do trasy</div>`;
+            const kmlRow = `<div class="tooltip-kml-row">
+                <button class="tooltip-kml-btn" onclick="wgrajKML(${projekt.id}); event.stopPropagation();">📂 Wgraj KML</button>
+                <button class="tooltip-kml-btn przebieg" onclick="pokazPrzebieg(${projekt.id}); event.stopPropagation();">🧵 Pokaż przebieg</button>
+            </div>`;
+            return `<div class="tooltip-title">${projekt.nazwa}</div>${status}${pm}${bhp}${mail}${kmlRow}<div class="tooltip-hint">👆 dotknij nazwę, aby dodać do trasy</div>`;
         }
 
         projekty.forEach(projekt => {
@@ -662,6 +826,7 @@
                 offset: [0, -28],
                 opacity: 1,
                 sticky: false,
+                interactive: true,
                 className: 'custom-tooltip'
             });
             marker.on('click', function () { dodajDoTrasyZId(projekt.id); marker.closeTooltip(); });
@@ -773,6 +938,157 @@
 
         function przelaczLegende() {
             document.getElementById('legend-panel').classList.toggle('active');
+        }
+
+        // ---------------------------------------------------------------
+        // WGRYWANIE KML I TRYB "POKAŻ TYLKO TEN PRZEBIEG"
+        // ---------------------------------------------------------------
+        function wgrajKML(id) {
+            const input = document.getElementById('kml-file-input');
+            input.dataset.targetId = id;
+            input.click();
+        }
+
+        document.getElementById('kml-file-input').addEventListener('change', function (e) {
+            const plik = e.target.files[0];
+            const id = parseInt(this.dataset.targetId, 10);
+            this.value = '';
+            if (!plik || !id) return;
+
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                try {
+                    wczytajKML(evt.target.result, id);
+                } catch (err) {
+                    alert('Nie udało się odczytać tego pliku KML.');
+                }
+            };
+            reader.readAsText(plik);
+        });
+
+        function wczytajKML(tekstXml, id) {
+            const wynik = parsujKML(tekstXml);
+            if (wynik.liniaPunkty.length === 0 && wynik.punktyOsobne.length === 0) {
+                alert('W tym pliku KML nie znaleziono ani linii (LineString), ani punktów (Point).');
+                return;
+            }
+            zapiszPrzebieg(id, wynik);
+            alert('Przebieg wczytany ✅ — dotknij pinezkę tego obiektu i wybierz „Pokaż przebieg”.');
+        }
+
+        // Sam parser - wyciąga linię (LineString) i pojedyncze punkty (Point) z tekstu KML
+        function parsujKML(tekstXml) {
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(tekstXml, 'text/xml');
+
+            let liniaPunkty = [];
+            const lineStrings = xml.getElementsByTagName('LineString');
+            for (const ls of lineStrings) {
+                const coordTag = ls.getElementsByTagName('coordinates')[0];
+                if (!coordTag) continue;
+                coordTag.textContent.trim().split(/\s+/).forEach(para => {
+                    const [lng, lat] = para.split(',').map(Number);
+                    if (!isNaN(lat) && !isNaN(lng)) liniaPunkty.push([lat, lng]);
+                });
+            }
+
+            let punktyOsobne = [];
+            const points = xml.getElementsByTagName('Point');
+            for (const pt of points) {
+                const coordTag = pt.getElementsByTagName('coordinates')[0];
+                if (!coordTag) continue;
+                const [lng, lat] = coordTag.textContent.trim().split(',').map(Number);
+                if (!isNaN(lat) && !isNaN(lng)) punktyOsobne.push([lat, lng]);
+            }
+
+            return { liniaPunkty, punktyOsobne };
+        }
+
+        // Zapisuje sparsowany przebieg (linię/punkty) do warstw Leaflet powiązanych z danym projektem
+        function zapiszPrzebieg(id, { liniaPunkty, punktyOsobne }) {
+            if (liniePrzebiegu[id]) map.removeLayer(liniePrzebiegu[id]);
+            if (punktyKmlGroup[id]) map.removeLayer(punktyKmlGroup[id]);
+
+            if (liniaPunkty.length > 1) {
+                liniePrzebiegu[id] = L.polyline(liniaPunkty, { color: '#ffb020', weight: 4, opacity: 0.95, dashArray: '7 5' });
+            }
+            if (punktyOsobne.length > 0) {
+                punktyKmlGroup[id] = L.layerGroup(
+                    punktyOsobne.map(c => L.circleMarker(c, { radius: 5, color: '#fff', weight: 1.5, fillColor: '#ffb020', fillOpacity: 1 }))
+                );
+            }
+        }
+
+        // Próbuje pobrać plik <id>.kml z repo GitHub (KML_REPO_BASE). Zwraca true jeśli się udało.
+        async function pobierzKMLzGitHuba(id) {
+            try {
+                const resp = await fetch(`${KML_REPO_BASE}${id}.kml`);
+                if (!resp.ok) return false;
+                const tekst = await resp.text();
+                const wynik = parsujKML(tekst);
+                if (wynik.liniaPunkty.length === 0 && wynik.punktyOsobne.length === 0) return false;
+                zapiszPrzebieg(id, wynik);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        async function pokazPrzebieg(id) {
+            let linia = liniePrzebiegu[id];
+            let punktyKml = punktyKmlGroup[id];
+
+            if (!linia && !punktyKml) {
+                const btn = event ? event.target : null;
+                if (btn) { btn.disabled = true; btn.innerText = '⏳ Sprawdzam...'; }
+
+                const pobrano = await pobierzKMLzGitHuba(id);
+
+                if (btn) { btn.disabled = false; btn.innerText = '🧵 Pokaż przebieg'; }
+
+                if (pobrano) {
+                    linia = liniePrzebiegu[id];
+                    punktyKml = punktyKmlGroup[id];
+                } else {
+                    alert('Nie znaleziono przebiegu ani w repo GitHub, ani wgranego ręcznie. Użyj przycisku „Wgraj KML”.');
+                    return;
+                }
+            }
+
+            if (markerRefs[id]) markerRefs[id].closeTooltip();
+
+            // Chowamy resztę mapy - zostaje tylko wybrany obiekt i jego przebieg
+            if (map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup);
+            if (map.hasLayer(labelsGroup)) map.removeLayer(labelsGroup);
+
+            const marker = markerRefs[id];
+            if (marker) marker.addTo(map);
+            if (linia) linia.addTo(map);
+            if (punktyKml) punktyKml.addTo(map);
+
+            const bounds = [];
+            if (linia) bounds.push(...linia.getLatLngs());
+            if (punktyKml) punktyKml.eachLayer(l => bounds.push(l.getLatLng()));
+            if (marker) bounds.push(marker.getLatLng());
+            if (bounds.length) map.fitBounds(bounds, { padding: [60, 60] });
+
+            trybFokusAktywny = { id, marker, linia, punktyKml };
+            document.getElementById('btn-exit-focus').style.display = 'flex';
+        }
+
+        function wyjdzZFokusu() {
+            if (!trybFokusAktywny) return;
+            if (trybFokusAktywny.marker) map.removeLayer(trybFokusAktywny.marker);
+            if (trybFokusAktywny.linia) map.removeLayer(trybFokusAktywny.linia);
+            if (trybFokusAktywny.punktyKml) map.removeLayer(trybFokusAktywny.punktyKml);
+
+            clusterGroup.addTo(map);
+            aktualizujWidocznoscEtykiet();
+
+            trybFokusAktywny = null;
+            document.getElementById('btn-exit-focus').style.display = 'none';
+
+            if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
         }
 
         // ---------------------------------------------------------------
@@ -922,11 +1238,43 @@
             przeliczTraseFetch();
         }
 
+        // Buduje link Google Maps (do pojedynczego punktu albo do całej trasy) i wypełnia
+        // nim duży, widoczny box na górze panelu. Zwraca URL albo null, gdy brak punktów.
+        function aktualizujBoxLinku() {
+            const box = document.getElementById('route-link-box');
+            const label = document.getElementById('route-link-label');
+            const urlBox = document.getElementById('route-link-url');
+            const openBtn = document.getElementById('btn-open-route');
+            const shareBtn = document.getElementById('btn-share-route');
+
+            if (punktyTrasy.length === 0) {
+                box.classList.remove('active');
+                return null;
+            }
+
+            let url;
+            if (punktyTrasy.length === 1) {
+                const p = punktyTrasy[0];
+                url = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+                label.innerText = `🔗 Link do punktu: ${p.nazwa}`;
+            } else {
+                const origin = `${punktyTrasy[0].lat},${punktyTrasy[0].lng}`;
+                const destination = `${punktyTrasy[punktyTrasy.length - 1].lat},${punktyTrasy[punktyTrasy.length - 1].lng}`;
+                const waypoints = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
+                url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? '&waypoints=' + waypoints : ''}&travelmode=driving`;
+                label.innerText = `🔗 Link do trasy (${punktyTrasy.length} pkt)`;
+            }
+
+            urlBox.innerText = url;
+            openBtn.href = url;
+            shareBtn.style.display = navigator.share ? "flex" : "none";
+            box.classList.add('active');
+            return url;
+        }
+
         function przeliczTraseFetch() {
             const distanceText = document.getElementById('route-distance');
-            const googleLink = document.getElementById('btn-google-maps');
-            const copyBtn = document.getElementById('btn-copy-route');
-            const shareBtn = document.getElementById('btn-share-route');
+            aktualizujBoxLinku();
 
             if (punktyTrasy.length >= 2) {
                 distanceText.innerHTML = `⏳ Kalkulowanie drogi OSRM...`;
@@ -949,38 +1297,29 @@
                             distanceText.innerHTML = `⚠️ Brak dróg dojazdowych.`;
                         }
                     }).catch(() => distanceText.innerHTML = `⚠️ Błąd połączenia trasy.`);
-
-                const origin = `${punktyTrasy[0].lat},${punktyTrasy[0].lng}`;
-                const destination = `${punktyTrasy[punktyTrasy.length - 1].lat},${punktyTrasy[punktyTrasy.length - 1].lng}`;
-                const waypoints = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
-
-                googleLink.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? '&waypoints=' + waypoints : ''}&travelmode=driving`;
-                googleLink.style.display = "flex";
-                copyBtn.style.display = "flex";
-                shareBtn.style.display = (navigator.share ? "flex" : "none");
+            } else if (punktyTrasy.length === 1) {
+                if (liniaTrasy) map.removeLayer(liniaTrasy);
+                distanceText.innerHTML = `Link do punktu gotowy — skopiuj powyżej 👆`;
             } else {
                 if (liniaTrasy) map.removeLayer(liniaTrasy);
-                distanceText.innerHTML = punktyTrasy.length === 1 ? `Wskaż kolejny punkt na mapie...` : `Kliknij punkt na mapie, by zacząć...`;
-                googleLink.style.display = "none";
-                copyBtn.style.display = "none";
-                shareBtn.style.display = "none";
+                distanceText.innerHTML = `Kliknij punkt na mapie, by zacząć...`;
             }
         }
 
-        // Kopiowanie linku trasy Google Maps do schowka - z wizualnym potwierdzeniem
+        // Kopiowanie linku (punktu lub trasy) do schowka - z dużym, wyraźnym potwierdzeniem
         function skopiujLinkTrasy() {
-            const googleLink = document.getElementById('btn-google-maps');
+            const urlBox = document.getElementById('route-link-url');
             const copyBtn = document.getElementById('btn-copy-route');
-            const url = googleLink.href;
-            if (!url) return;
+            const url = urlBox.innerText;
+            if (!url || url === '—') return;
 
             const pokazSukces = () => {
                 copyBtn.classList.add('copied');
-                copyBtn.innerHTML = '✅';
+                copyBtn.innerHTML = '✅ Skopiowano!';
                 setTimeout(() => {
                     copyBtn.classList.remove('copied');
-                    copyBtn.innerHTML = '📋';
-                }, 1600);
+                    copyBtn.innerHTML = '📋 Kopiuj link';
+                }, 1800);
             };
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1002,16 +1341,35 @@
             document.body.removeChild(ta);
         }
 
-        // Udostępnianie trasy przez natywny panel systemowy (jeśli dostępny w przeglądarce)
+        // Udostępnianie linku przez natywny panel systemowy (jeśli dostępny w przeglądarce)
         function udostepnijTrase() {
-            const googleLink = document.getElementById('btn-google-maps');
-            const url = googleLink.href;
-            if (!url || !navigator.share) return;
+            const urlBox = document.getElementById('route-link-url');
+            const url = urlBox.innerText;
+            if (!url || url === '—' || !navigator.share) return;
             navigator.share({
-                title: 'Trasa ENPROM',
-                text: `Trasa (${punktyTrasy.length} punktów) wyznaczona w mapie projektów ENPROM`,
+                title: 'Mapa projektów ENPROM',
+                text: punktyTrasy.length === 1 ? `Lokalizacja: ${punktyTrasy[0].nazwa}` : `Trasa (${punktyTrasy.length} punktów) z mapy projektów ENPROM`,
                 url: url
             }).catch(() => {});
+        }
+
+        // Wysyłka mailem przez Outlook (otwiera domyślny klient pocztowy z gotową treścią)
+        function udostepnijOutlook() {
+            const urlBox = document.getElementById('route-link-url');
+            const url = urlBox.innerText;
+            if (!url || url === '—') return;
+            const temat = punktyTrasy.length === 1 ? `Lokalizacja: ${punktyTrasy[0].nazwa}` : `Trasa ENPROM (${punktyTrasy.length} pkt)`;
+            const tresc = `${temat}\n\n${url}`;
+            window.location.href = `mailto:?subject=${encodeURIComponent(temat)}&body=${encodeURIComponent(tresc)}`;
+        }
+
+        // Udostępnianie w Microsoft Teams przez oficjalny "Share to Teams" deep-link (bez klucza API)
+        function udostepnijTeams() {
+            const urlBox = document.getElementById('route-link-url');
+            const url = urlBox.innerText;
+            if (!url || url === '—') return;
+            const tekst = punktyTrasy.length === 1 ? `Lokalizacja: ${punktyTrasy[0].nazwa}` : `Trasa ENPROM (${punktyTrasy.length} pkt)`;
+            window.open(`https://teams.microsoft.com/share?href=${encodeURIComponent(url)}&msgText=${encodeURIComponent(tekst)}`, '_blank');
         }
 
         function zamknijIResetuj() {
