@@ -29,6 +29,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 
 #top-bar{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;z-index:998;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
 #search-box{pointer-events:auto;flex:1;max-width:320px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;box-shadow:0 1px 5px rgba(0,0,0,.25)}
+#btn-view{pointer-events:auto;background:#fff;border:1px solid var(--border);color:var(--text);height:42px;padding:0 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.25);white-space:nowrap}
 #btn-legend{pointer-events:auto;background:#fff;border:1px solid var(--border);color:var(--text);width:42px;height:42px;min-width:42px;border-radius:8px;font-size:16px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.25)}
 #legend-panel{position:absolute;top:60px;right:10px;z-index:998;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;width:190px;box-shadow:0 2px 10px rgba(0,0,0,.3);display:none}
 #legend-panel.active{display:block}
@@ -41,7 +42,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 
 #route-panel{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:92vw;transform:translateX(100%);transition:transform .25s ease;background:#fff;border-left:1px solid var(--border);box-shadow:-2px 0 12px rgba(0,0,0,.15);padding:12px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom));z-index:1000;display:flex;flex-direction:column;overflow-y:auto}
 #route-panel.active{transform:none}
-@media(min-width:700px){body.panel-open #map{width:calc(100% - 340px)}body.panel-open #top-bar{right:350px}body.panel-open #legend-panel{right:350px}}
+body.panel-open:not(.mobile) #map{width:calc(100% - 340px)}body.panel-open:not(.mobile) #top-bar{right:350px}body.panel-open:not(.mobile) #legend-panel{right:350px}
 .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .panel-title{font-size:13px;font-weight:700}
 .panel-hint{font-size:11px;color:var(--dim);text-align:center;margin-bottom:8px}
@@ -84,35 +85,34 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 .tooltip-row a{color:#111;font-weight:600}
 .tooltip-hint{font-size:10.5px;color:var(--dim);margin-top:6px;padding-top:5px;border-top:1px dashed var(--border)}
 .btn-toggle-list{display:none;background:#fff;border:1px solid #888;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer}
-@media(max-width:699px){
-#search-box{font-size:16px;max-width:none}
-#route-panel{top:auto;left:0;right:0;bottom:0;width:100%;max-width:none;transform:translateY(100%);border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.25);padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));max-height:70vh}
-#route-panel.active{transform:none}
-.panel-header{order:0;margin-bottom:6px;gap:8px}
-.panel-header .panel-title{flex:1}
-.btn-toggle-list{display:inline-block}
-.panel-distance{order:1;margin-bottom:8px;padding:8px;font-size:13px}
-.route-link-box{order:2;padding:0;border:none;background:none;margin-bottom:0}
-.route-link-label,.route-link-url{display:none}
-.route-link-main .btn-plain{padding:14px 8px;font-size:15px}
-.panel-hint{order:3;display:none;margin-top:10px}
-.btn-loc{order:4;display:none;margin-top:0}
-.route-tiles-scroll{order:5;display:none;flex:none;max-height:34vh}
-#route-panel.expanded .panel-hint,#route-panel.expanded .btn-loc{display:block}
-#route-panel.expanded .btn-loc{display:flex}
-#route-panel.expanded .route-tiles-scroll{display:flex}
-.btn-clear-route{display:none}
-.tile-staff-contact{padding:10px 8px;font-size:12px}
-body.panel-open .leaflet-bottom{margin-bottom:150px}
-body.panel-expanded .leaflet-bottom{display:none}
-.leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
-}
+body.mobile #search-box{font-size:16px;max-width:none}
+body.mobile #route-panel{top:auto;left:0;right:0;bottom:0;width:100%;max-width:none;transform:translateY(100%);border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.25);padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));max-height:70vh}
+body.mobile #route-panel.active{transform:none}
+body.mobile .panel-header{order:0;margin-bottom:6px;gap:8px}
+body.mobile .panel-header .panel-title{flex:1}
+body.mobile .btn-toggle-list{display:inline-block}
+body.mobile .panel-distance{order:1;margin-bottom:8px;padding:8px;font-size:13px}
+body.mobile .route-link-box{order:2;padding:0;border:none;background:none;margin-bottom:0}
+body.mobile .route-link-label,body.mobile .route-link-url{display:none}
+body.mobile .route-link-main .btn-plain{padding:14px 8px;font-size:15px}
+body.mobile .panel-hint{order:3;display:none;margin-top:10px}
+body.mobile .btn-loc{order:4;display:none;margin-top:0}
+body.mobile .route-tiles-scroll{order:5;display:none;flex:none;max-height:34vh}
+body.mobile #route-panel.expanded .panel-hint,body.mobile #route-panel.expanded .btn-loc{display:block}
+body.mobile #route-panel.expanded .btn-loc{display:flex}
+body.mobile #route-panel.expanded .route-tiles-scroll{display:flex}
+body.mobile .btn-clear-route{display:none}
+body.mobile .tile-staff-contact{padding:10px 8px;font-size:12px}
+body.mobile body.panel-open .leaflet-bottom{margin-bottom:150px}
+body.mobile body.panel-expanded .leaflet-bottom{display:none}
+body.mobile .leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="top-bar">
   <input id="search-box" type="text" placeholder="Szukaj projektu / miasta..." oninput="filtrujProjekty(this.value)">
+  <button id="btn-view" onclick="przelaczWidok()">📱 Mobilna</button>
   <button id="btn-legend" onclick="przelaczLegende()">ℹ️</button>
 </div>
 <div id="legend-panel">
@@ -287,6 +287,18 @@ function filtrujProjekty(zapytanie) {
         if (el) el.style.display = pasuje ? "" : "none";
     });
 }
+function ustawEtykieteWidoku() {
+    const m = document.body.classList.contains('mobile');
+    document.getElementById('btn-view').innerText = m ? '🖥 Komputer' : '📱 Mobilna';
+}
+function przelaczWidok() {
+    document.body.classList.toggle('mobile');
+    ustawEtykieteWidoku();
+    map.invalidateSize();
+}
+if (window.innerWidth < 700) document.body.classList.add('mobile');
+ustawEtykieteWidoku();
+
 function przelaczLegende() { document.getElementById('legend-panel').classList.toggle('active'); }
 
 // Planer trasy
@@ -408,7 +420,7 @@ function przeliczTraseFetch() {
                     const m = Math.round(t.duration / 60), h = Math.floor(m / 60);
                     dt.innerHTML = `Razem: <strong>${(t.distance / 1000).toFixed(1)} km</strong> · ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>`;
                     liniaTrasy = L.polyline(t.geometry.coordinates.map(c => [c[1], c[0]]), { color: '#222', weight: 5, opacity: 0.85 }).addTo(map);
-                    const mobilny = window.innerWidth < 700;
+                    const mobilny = document.body.classList.contains('mobile');
                     map.fitBounds(liniaTrasy.getBounds(), { paddingTopLeft: [30, mobilny ? 70 : 50], paddingBottomRight: [30, mobilny ? 200 : 50] });
                 } else dt.innerHTML = `⚠️ Brak dróg dojazdowych.`;
             }).catch(() => dt.innerHTML = `⚠️ Błąd połączenia trasy.`);
