@@ -83,6 +83,30 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 .tooltip-row{font-size:12px;color:#444;margin-top:3px}
 .tooltip-row a{color:#111;font-weight:600}
 .tooltip-hint{font-size:10.5px;color:var(--dim);margin-top:6px;padding-top:5px;border-top:1px dashed var(--border)}
+.btn-toggle-list{display:none;background:#fff;border:1px solid #888;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer}
+@media(max-width:699px){
+#search-box{font-size:16px;max-width:none}
+#route-panel{top:auto;left:0;right:0;bottom:0;width:100%;max-width:none;transform:translateY(100%);border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.25);padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));max-height:70vh}
+#route-panel.active{transform:none}
+.panel-header{order:0;margin-bottom:6px;gap:8px}
+.panel-header .panel-title{flex:1}
+.btn-toggle-list{display:inline-block}
+.panel-distance{order:1;margin-bottom:8px;padding:8px;font-size:13px}
+.route-link-box{order:2;padding:0;border:none;background:none;margin-bottom:0}
+.route-link-label,.route-link-url{display:none}
+.route-link-main .btn-plain{padding:14px 8px;font-size:15px}
+.panel-hint{order:3;display:none;margin-top:10px}
+.btn-loc{order:4;display:none;margin-top:0}
+.route-tiles-scroll{order:5;display:none;flex:none;max-height:34vh}
+#route-panel.expanded .panel-hint,#route-panel.expanded .btn-loc{display:block}
+#route-panel.expanded .btn-loc{display:flex}
+#route-panel.expanded .route-tiles-scroll{display:flex}
+.btn-clear-route{display:none}
+.tile-staff-contact{padding:10px 8px;font-size:12px}
+body.panel-open .leaflet-bottom{margin-bottom:150px}
+body.panel-expanded .leaflet-bottom{display:none}
+.leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
+}
 </style>
 </head>
 <body>
@@ -108,6 +132,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 <div id="route-panel">
   <div class="panel-header">
     <span class="panel-title">Planer trasy</span>
+    <button class="btn-toggle-list" id="btn-toggle-list" onclick="przelaczListe()">Punkty (<span id="list-count">0</span>) ▲</button>
     <button class="btn-tile-delete" style="font-size:20px;" onclick="zamknijIResetuj()">✖</button>
   </div>
   <div class="route-link-box" id="route-link-box">
@@ -280,6 +305,13 @@ function aktualizujBadgeLiczby() {
     const b = document.getElementById('route-count-badge');
     b.style.display = punktyTrasy.length > 0 ? 'inline-block' : 'none';
     b.innerText = punktyTrasy.length;
+    document.getElementById('list-count').innerText = punktyTrasy.length;
+}
+
+function przelaczListe() {
+    const rozwinieta = document.getElementById('route-panel').classList.toggle('expanded');
+    document.body.classList.toggle('panel-expanded', rozwinieta);
+    document.getElementById('btn-toggle-list').innerHTML = `Punkty (<span id="list-count">${punktyTrasy.length}</span>) ${rozwinieta ? '▼' : '▲'}`;
 }
 
 function dodajDoTrasyZId(id) {
@@ -376,7 +408,8 @@ function przeliczTraseFetch() {
                     const m = Math.round(t.duration / 60), h = Math.floor(m / 60);
                     dt.innerHTML = `Razem: <strong>${(t.distance / 1000).toFixed(1)} km</strong> · ok. <strong>${h > 0 ? h + 'h ' + (m % 60) + 'min' : m + ' min'}</strong>`;
                     liniaTrasy = L.polyline(t.geometry.coordinates.map(c => [c[1], c[0]]), { color: '#222', weight: 5, opacity: 0.85 }).addTo(map);
-                    map.fitBounds(liniaTrasy.getBounds(), { padding: [50, 50] });
+                    const mobilny = window.innerWidth < 700;
+                    map.fitBounds(liniaTrasy.getBounds(), { paddingTopLeft: [30, mobilny ? 70 : 50], paddingBottomRight: [30, mobilny ? 200 : 50] });
                 } else dt.innerHTML = `⚠️ Brak dróg dojazdowych.`;
             }).catch(() => dt.innerHTML = `⚠️ Błąd połączenia trasy.`);
     } else if (punktyTrasy.length === 1) {
@@ -409,7 +442,9 @@ function zamknijIResetuj() {
     punktyTrasy = [];
     if (liniaTrasy) map.removeLayer(liniaTrasy);
     document.getElementById('route-panel').classList.remove('active');
-    document.body.classList.remove('panel-open');
+    document.body.classList.remove('panel-open', 'panel-expanded');
+    document.getElementById('route-panel').classList.remove('expanded');
+    document.getElementById('btn-toggle-list').innerHTML = `Punkty (<span id="list-count">0</span>) ▲`;
     map.invalidateSize();
     document.getElementById('btn-trigger-plan').style.display = 'flex';
     aktualizujBadgeLiczby();
