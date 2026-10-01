@@ -73,10 +73,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 .route-link-main .btn-plain{flex:1;padding:14px 8px;font-size:14px}
 
 .btn-clear-route{background:none;border:none;color:var(--danger);font-size:12px;margin-top:6px;width:100%;cursor:pointer;font-weight:600;padding:6px}
-#btn-exit-focus{position:absolute;top:max(64px,calc(env(safe-area-inset-top) + 64px));left:50%;transform:translateX(-50%);z-index:998;display:none;align-items:center;gap:6px;background:#fff;border:1px solid #888;color:var(--text);padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 
-.tooltip-kml-row{display:flex;gap:6px;margin-top:8px}
-.tooltip-kml-btn{flex:1;background:#f4f4f4;border:1px solid #aaa;color:#111;border-radius:6px;padding:6px 4px;font-size:10.5px;font-weight:600;cursor:pointer;text-align:center}
 .user-location-marker{background:#222;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(0,0,0,.2)}
 
 .leaflet-tooltip.custom-tooltip{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 12px;box-shadow:0 4px 14px rgba(0,0,0,.3);font-family:inherit;max-width:240px;white-space:normal;pointer-events:auto}
@@ -105,8 +102,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
   <div class="legend-row">Blada pinezka — nieaktywny</div>
   <div class="legend-row">Czarna pinezka — punkt stały</div>
 </div>
-<button id="btn-exit-focus" onclick="wyjdzZFokusu()">⬅ Pokaż wszystkie projekty</button>
-<input type="file" id="kml-file-input" accept=".kml" style="display:none;">
 <button id="btn-trigger-plan" onclick="otworzPlaner()">🗺️ Wyznacz trasę <span id="route-count-badge">0</span></button>
 
 <div id="route-panel">
@@ -192,22 +187,12 @@ const clusterGroup = L.markerClusterGroup({
 map.addLayer(clusterGroup);
 const labelsGroup = L.layerGroup().addTo(map);
 
-// Adres bazowy do plików KML w repo GitHub (pliki: <id_projektu>.kml)
-const KML_REPO_BASE = "https://raw.githubusercontent.com/TWOJ-LOGIN/TWOJE-REPO/main/kml/";
-const liniePrzebiegu = {};
-const punktyKmlGroup = {};
-let trybFokusAktywny = null;
-
 function budujDymekHtml(p) {
     const pm = p.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${p.kierownik}${p.telKierownik ? ' · <a href="tel:' + p.telKierownik + '">' + p.telKierownik + '</a>' : ''}</div>` : "";
     const bhp = p.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${p.bhp}${p.telBhp ? ' · <a href="tel:' + p.telBhp + '">' + p.telBhp + '</a>' : ''}</div>` : "";
     const mail = p.mail ? `<div class="tooltip-row">✉️ <a href="mailto:${p.mail}">${p.mail}</a></div>` : "";
     const status = p.status === "nieaktywne" ? "nieaktywny" : (p.status === "staly" ? "punkt stały" : "aktywny");
-    return `<div class="tooltip-title">${p.nazwa}</div><span class="tooltip-status">${status}</span>${pm}${bhp}${mail}
-        <div class="tooltip-kml-row">
-            <button class="tooltip-kml-btn" onclick="wgrajKML(${p.id}); event.stopPropagation();">📂 Wgraj KML</button>
-            <button class="tooltip-kml-btn" onclick="pokazPrzebieg(${p.id}); event.stopPropagation();">🧵 Pokaż przebieg</button>
-        </div><div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
+    return `<div class="tooltip-title">${p.nazwa}</div><span class="tooltip-status">${status}</span>${pm}${bhp}${mail}<div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
 }
 
 projekty.forEach(p => {
@@ -233,7 +218,6 @@ projekty.forEach(p => {
 if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
 
 function aktualizujWidocznoscEtykiet() {
-    if (trybFokusAktywny) return;
     if (map.getZoom() < 7) { if (map.hasLayer(labelsGroup)) map.removeLayer(labelsGroup); }
     else if (!map.hasLayer(labelsGroup)) labelsGroup.addTo(map);
 }
@@ -278,112 +262,6 @@ function filtrujProjekty(zapytanie) {
     });
 }
 function przelaczLegende() { document.getElementById('legend-panel').classList.toggle('active'); }
-
-// KML
-function wgrajKML(id) {
-    const input = document.getElementById('kml-file-input');
-    input.dataset.targetId = id;
-    input.click();
-}
-document.getElementById('kml-file-input').addEventListener('change', function (e) {
-    const plik = e.target.files[0];
-    const id = parseInt(this.dataset.targetId, 10);
-    this.value = '';
-    if (!plik || !id) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-        try { wczytajKML(evt.target.result, id); } catch (err) { alert('Nie udało się odczytać tego pliku KML.'); }
-    };
-    reader.readAsText(plik);
-});
-
-function wczytajKML(tekstXml, id) {
-    const w = parsujKML(tekstXml);
-    if (w.liniaPunkty.length === 0 && w.punktyOsobne.length === 0) { alert('W tym pliku KML nie znaleziono ani linii (LineString), ani punktów (Point).'); return; }
-    zapiszPrzebieg(id, w);
-    alert('Przebieg wczytany ✅ — dotknij pinezkę tego obiektu i wybierz „Pokaż przebieg”.');
-}
-
-function parsujKML(tekstXml) {
-    const xml = new DOMParser().parseFromString(tekstXml, 'text/xml');
-    const liniaPunkty = [];
-    for (const ls of xml.getElementsByTagName('LineString')) {
-        const c = ls.getElementsByTagName('coordinates')[0];
-        if (!c) continue;
-        c.textContent.trim().split(/\s+/).forEach(para => {
-            const [lng, lat] = para.split(',').map(Number);
-            if (!isNaN(lat) && !isNaN(lng)) liniaPunkty.push([lat, lng]);
-        });
-    }
-    const punktyOsobne = [];
-    for (const pt of xml.getElementsByTagName('Point')) {
-        const c = pt.getElementsByTagName('coordinates')[0];
-        if (!c) continue;
-        const [lng, lat] = c.textContent.trim().split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) punktyOsobne.push([lat, lng]);
-    }
-    return { liniaPunkty, punktyOsobne };
-}
-
-function zapiszPrzebieg(id, { liniaPunkty, punktyOsobne }) {
-    if (liniePrzebiegu[id]) map.removeLayer(liniePrzebiegu[id]);
-    if (punktyKmlGroup[id]) map.removeLayer(punktyKmlGroup[id]);
-    if (liniaPunkty.length > 1) liniePrzebiegu[id] = L.polyline(liniaPunkty, { color: '#000', weight: 4, opacity: 0.9, dashArray: '7 5' });
-    if (punktyOsobne.length > 0) punktyKmlGroup[id] = L.layerGroup(punktyOsobne.map(c => L.circleMarker(c, { radius: 5, color: '#fff', weight: 1.5, fillColor: '#000', fillOpacity: 1 })));
-}
-
-async function pobierzKMLzGitHuba(id) {
-    try {
-        const resp = await fetch(`${KML_REPO_BASE}${id}.kml`);
-        if (!resp.ok) return false;
-        const w = parsujKML(await resp.text());
-        if (w.liniaPunkty.length === 0 && w.punktyOsobne.length === 0) return false;
-        zapiszPrzebieg(id, w);
-        return true;
-    } catch (err) { return false; }
-}
-
-async function pokazPrzebieg(id) {
-    let linia = liniePrzebiegu[id];
-    let punktyKml = punktyKmlGroup[id];
-    if (!linia && !punktyKml) {
-        const btn = (typeof event !== 'undefined' && event) ? event.target : null;
-        if (btn) { btn.disabled = true; btn.innerText = '⏳ Sprawdzam...'; }
-        const pobrano = await pobierzKMLzGitHuba(id);
-        if (btn) { btn.disabled = false; btn.innerText = '🧵 Pokaż przebieg'; }
-        if (!pobrano) { alert('Nie znaleziono przebiegu ani w repo GitHub, ani wgranego ręcznie. Użyj przycisku „Wgraj KML”.'); return; }
-        linia = liniePrzebiegu[id];
-        punktyKml = punktyKmlGroup[id];
-    }
-    if (markerRefs[id]) markerRefs[id].closeTooltip();
-    if (map.hasLayer(clusterGroup)) map.removeLayer(clusterGroup);
-    if (map.hasLayer(labelsGroup)) map.removeLayer(labelsGroup);
-
-    const marker = markerRefs[id];
-    trybFokusAktywny = { id, marker, linia, punktyKml };
-    if (marker) marker.addTo(map);
-    if (linia) linia.addTo(map);
-    if (punktyKml) punktyKml.addTo(map);
-
-    const bounds = [];
-    if (linia) bounds.push(...linia.getLatLngs());
-    if (punktyKml) punktyKml.eachLayer(l => bounds.push(l.getLatLng()));
-    if (marker) bounds.push(marker.getLatLng());
-    if (bounds.length) map.fitBounds(bounds, { padding: [60, 60] });
-    document.getElementById('btn-exit-focus').style.display = 'flex';
-}
-
-function wyjdzZFokusu() {
-    if (!trybFokusAktywny) return;
-    if (trybFokusAktywny.marker) map.removeLayer(trybFokusAktywny.marker);
-    if (trybFokusAktywny.linia) map.removeLayer(trybFokusAktywny.linia);
-    if (trybFokusAktywny.punktyKml) map.removeLayer(trybFokusAktywny.punktyKml);
-    trybFokusAktywny = null;
-    clusterGroup.addTo(map);
-    aktualizujWidocznoscEtykiet();
-    document.getElementById('btn-exit-focus').style.display = 'none';
-    if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: [40, 40] });
-}
 
 // Planer trasy
 const container = document.getElementById('tiles-container');
