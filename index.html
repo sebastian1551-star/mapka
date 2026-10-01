@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mapa Projektów ENPROM</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -42,7 +42,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:
 
 #route-panel{position:fixed;top:0;right:0;bottom:0;width:340px;max-width:92vw;transform:translateX(100%);transition:transform .25s ease;background:#fff;border-left:1px solid var(--border);box-shadow:-2px 0 12px rgba(0,0,0,.15);padding:12px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom));z-index:1000;display:flex;flex-direction:column;overflow-y:auto}
 #route-panel.active{transform:none}
-body.panel-open:not(.mobile) #map{width:calc(100% - 340px)}body.panel-open:not(.mobile) #top-bar{right:350px}body.panel-open:not(.mobile) #legend-panel{right:350px}
+body.panel-open:not(.mobile) #map{width:calc(100% - 340px)}
+body.panel-open:not(.mobile) #top-bar{right:350px}
+body.panel-open:not(.mobile) #legend-panel{right:350px}
 .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .panel-title{font-size:13px;font-weight:700}
 .panel-hint{font-size:11px;color:var(--dim);text-align:center;margin-bottom:8px}
@@ -103,8 +105,8 @@ body.mobile #route-panel.expanded .btn-loc{display:flex}
 body.mobile #route-panel.expanded .route-tiles-scroll{display:flex}
 body.mobile .btn-clear-route{display:none}
 body.mobile .tile-staff-contact{padding:10px 8px;font-size:12px}
-body.mobile body.panel-open .leaflet-bottom{margin-bottom:150px}
-body.mobile body.panel-expanded .leaflet-bottom{display:none}
+body.mobile.panel-open .leaflet-bottom{margin-bottom:150px}
+body.mobile.panel-expanded .leaflet-bottom{display:none}
 body.mobile .leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
 </style>
 </head>
@@ -140,7 +142,7 @@ body.mobile .leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
     <div class="route-link-url" id="route-link-url">—</div>
     <div class="route-link-main">
       <button class="btn-plain" id="btn-copy-route" onclick="skopiujLinkTrasy()">Kopiuj link</button>
-      <a href="#" target="_blank" class="btn-plain" id="btn-open-route">Otwórz trasę</a>
+      <a href="#" target="_blank" rel="noopener" class="btn-plain" id="btn-open-route">Otwórz trasę</a>
     </div>
   </div>
   <div class="panel-hint">Dotknij punkt na mapie, aby dodać go do trasy</div>
@@ -154,10 +156,13 @@ body.mobile .leaflet-tooltip.custom-tooltip{width:min(230px,70vw)}
 const map = L.map('map', { zoomSnap: 0.5, zoomControl: false }).setView([52.0, 19.0], 6);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Jedna, podstawowa mapa (OpenStreetMap)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors', subdomains: 'abc', maxZoom: 19
 }).addTo(map);
+
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tel = s => String(s || "").replace(/\s/g, "");
+const MAX_PUNKTOW_GOOGLE = 11; // origin + 9 waypoints + destination
 
 const projekty = [
  { id: 1, typ: "LN", status: "aktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "", mail: "" },
@@ -171,8 +176,8 @@ const projekty = [
  { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "244855 Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198", mail: "" },
  { id: 10, typ: "LN", status: "aktywne", nazwa: "241133 LN Demon Munstenberg", etykieta: "251133 Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", telKierownik: "789123456", bhp: "Marek Woźniak", telBhp: "654321987", mail: "" },
  { id: 11, typ: "LN", status: "aktywne", nazwa: "250002 LN Trębaczew", etykieta: "250002 Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "K. Stokłosa", telKierownik: "533306946", bhp: "Jakub Gacek", telBhp: "503042697", mail: "" },
- { id: 12, typ: "LN", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "A. Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "", mail: "" },
- { id: 13, typ: "SE", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184", mail: "" },
+ { id: 12, typ: "", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "A. Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "", mail: "" },
+ { id: 13, typ: "", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184", mail: "" },
  { id: 14, typ: "SE", status: "aktywne", nazwa: "211271 Baltic Power", etykieta: "211271 Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Daniel Riopka", telBhp: "", mail: "" },
  { id: 15, typ: "LK", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295", mail: "" },
  { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250804 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "Nadzór DE", telBhp: "+491624807448", mail: "" },
@@ -181,22 +186,23 @@ const projekty = [
  { id: 19, typ: "LN", status: "aktywne", nazwa: "LN Borken", etykieta: "Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
  { id: 20, typ: "LN", status: "aktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "A. Smoczyński", telBhp: "533350318", mail: "" },
  { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 22, typ: "LN", status: "nieaktywne", nazwa: "LN Frankfurt nad Menem", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 23, typ: "LN", status: "aktywne", nazwa: "LN Trzebienia", etykieta: "250415 Trzebinia", lat: 50.155272, lng: 19.463796, kierownik: "Vitali Aviaruk", telKierownik: "+48533306948", bhp: "-", telBhp: "", mail: "" },
+ { id: 22, typ: "LN", status: "nieaktywne", nazwa: "LN Frankfurt nad Odrą", etykieta: "Frankfurt", lat: 52.290722, lng: 14.478611, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
+ { id: 23, typ: "LN", status: "aktywne", nazwa: "LN Trzebinia", etykieta: "250415 Trzebinia", lat: 50.155272, lng: 19.463796, kierownik: "Vitali Aviaruk", telKierownik: "+48533306948", bhp: "-", telBhp: "", mail: "" },
  { id: 24, typ: "LN", status: "aktywne", nazwa: "LN Chełm", etykieta: "250147 Chełm", lat: 51.146126, lng: 23.502189, kierownik: "", telKierownik: "", bhp: "-", telBhp: "", mail: "" },
  { id: 25, typ: "SE", status: "aktywne", nazwa: "SE Żarnowiec 400kv", etykieta: "250671 Magazyn Żarnowiec", lat: 54.744423, lng: 18.095927, kierownik: "Bartłomiej Buczyński", telKierownik: "+48533350667", bhp: "-", telBhp: "", mail: "" },
  { id: 26, typ: "UW", status: "aktywne", nazwa: "250918 Mühlenbeck (Varsov)", etykieta: "250918 Mühlenbeck (Varsov)", lat: 53.542905, lng: 11.282758, kierownik: "Gabriel Grzonka", telKierownik: "", bhp: "Monika Sulka", telBhp: "+49 157 867 782 89", mail: "" },
  { id: 27, typ: "LE", status: "aktywne", nazwa: "400 KV Żydowo", etykieta: "260965 Dunowo-Żydowo", lat: 53.56384, lng: 16.34325, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
  { id: 29, typ: "LN", status: "aktywne", nazwa: "Pokój-Namysłów 110kv", etykieta: "Pokój-Namysłów 110kv", lat: 50.918390, lng: 17.830409, kierownik: "Sebastian Kędra", telKierownik: "533350527", bhp: "", telBhp: "", mail: "" },
- { id: 30, typ: "LN", status: "aktywne", nazwa: "SE JEDLICZE", etykieta: "220919 SE JEDLICZE", lat: 49.711281, lng: 21.655624, kierownik: "Mateusz Podsiadło", telKierownik: "504561609", bhp: "", telBhp: "", mail: "" }
- { id: 31, typ: "SE", status: "aktywne", nazwa: "Magazyn GmbH Frankfurt", etykieta: "Magazyn GmbH Frankfurt", lat:  52.290917, lng: 14.478861, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
- { id: 32, typ: "SE", status: "aktywne", nazwa: "Słupsk Stacja", etykieta: "Słupsk Stacja", lat: 54.501247, lng: 16.891565, kierownik: "Michał Matuszak", telKierownik: "+48 502 310 139", bhp: "", telBhp: "", mail: "" },
+ { id: 30, typ: "SE", status: "aktywne", nazwa: "SE JEDLICZE", etykieta: "220919 SE JEDLICZE", lat: 49.711281, lng: 21.655624, kierownik: "Mateusz Podsiadło", telKierownik: "504561609", bhp: "", telBhp: "", mail: "" },
+ { id: 31, typ: "SE", status: "aktywne", nazwa: "Magazyn GmbH Frankfurt", etykieta: "Magazyn GmbH Frankfurt", lat: 52.290917, lng: 14.478861, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
+ { id: 32, typ: "SE", status: "aktywne", nazwa: "Słupsk Stacja", etykieta: "Słupsk Stacja", lat: 54.501247, lng: 16.891565, kierownik: "Michał Matuszak", telKierownik: "+48 502 310 139", bhp: "", telBhp: "", mail: "" }
 ];
 
 function stworzIkone(p) {
     const klasa = p.status === "staly" ? "marker-pin pin-staly" : "marker-pin";
+    const glyph = p.id === 13 ? "⌂" : (p.id === 12 ? "M" : esc(p.typ));
     return L.divIcon({
-        html: `<div class="${klasa}"><div class="marker-glyph">${p.id === 13 ? "⌂" : (p.id === 12 ? "M" : p.typ)}</div></div>`,
+        html: `<div class="${klasa}"><div class="marker-glyph">${glyph}</div></div>`,
         className: p.status === "nieaktywne" ? "projekt-nieaktywny" : "",
         iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28]
     });
@@ -204,6 +210,7 @@ function stworzIkone(p) {
 
 let punktyTrasy = [];
 let liniaTrasy = null;
+let trasaSeq = 0;
 const punktyDoKadrowania = [];
 const markerRefs = {};
 const labelRefs = {};
@@ -216,11 +223,11 @@ map.addLayer(clusterGroup);
 const labelsGroup = L.layerGroup().addTo(map);
 
 function budujDymekHtml(p) {
-    const pm = p.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${p.kierownik}${p.telKierownik ? ' · <a href="tel:' + p.telKierownik + '">' + p.telKierownik + '</a>' : ''}</div>` : "";
-    const bhp = p.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${p.bhp}${p.telBhp ? ' · <a href="tel:' + p.telBhp + '">' + p.telBhp + '</a>' : ''}</div>` : "";
-    const mail = p.mail ? `<div class="tooltip-row">✉️ <a href="mailto:${p.mail}">${p.mail}</a></div>` : "";
+    const pm = p.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${esc(p.kierownik)}${p.telKierownik ? ' · <a href="tel:' + esc(tel(p.telKierownik)) + '">' + esc(p.telKierownik) + '</a>' : ''}</div>` : "";
+    const bhp = p.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${esc(p.bhp)}${p.telBhp ? ' · <a href="tel:' + esc(tel(p.telBhp)) + '">' + esc(p.telBhp) + '</a>' : ''}</div>` : "";
+    const mail = p.mail ? `<div class="tooltip-row">✉️ <a href="mailto:${esc(p.mail)}">${esc(p.mail)}</a></div>` : "";
     const status = p.status === "nieaktywne" ? "nieaktywny" : (p.status === "staly" ? "punkt stały" : "aktywny");
-    return `<div class="tooltip-title">${p.nazwa}</div><span class="tooltip-status">${status}</span>${pm}${bhp}${mail}<div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
+    return `<div class="tooltip-title">${esc(p.nazwa)}</div><span class="tooltip-status">${status}</span>${pm}${bhp}${mail}<div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
 }
 
 projekty.forEach(p => {
@@ -235,7 +242,7 @@ projekty.forEach(p => {
     const label = L.marker([p.lat, p.lng], {
         icon: L.divIcon({
             className: `map-label-centered ${p.status === 'nieaktywne' ? 'label-nieaktywna' : ''}`,
-            html: `<div class="label-pill">${tekst}</div>`, iconAnchor: [75, -8], iconSize: [150, 18]
+            html: `<div class="label-pill">${esc(tekst)}</div>`, iconAnchor: [75, -8], iconSize: [150, 18]
         }),
         interactive: false
     });
@@ -247,14 +254,20 @@ if (punktyDoKadrowania.length > 0) map.fitBounds(punktyDoKadrowania, { padding: 
 
 function aktualizujWidocznoscEtykiet() {
     if (map.getZoom() < 7) { if (map.hasLayer(labelsGroup)) map.removeLayer(labelsGroup); }
-    else if (!map.hasLayer(labelsGroup)) labelsGroup.addTo(map);
+    else if (!map.hasLayer(labelsGroup)) {
+        labelsGroup.addTo(map);
+        filtrujProjekty(document.getElementById('search-box').value); // przywróć filtr po ponownym dodaniu etykiet
+    }
 }
 map.on('zoomend', aktualizujWidocznoscEtykiet);
 aktualizujWidocznoscEtykiet();
 
-// Dowolny punkt na mapie
+// Dowolny punkt na mapie — tylko gdy planer jest otwarty (unika przypadkowych punktów)
 const customMarkers = {};
-map.on('click', e => dodajPunktNiestandardowy(e.latlng));
+map.on('click', e => {
+    if (!document.getElementById('route-panel').classList.contains('active')) return;
+    dodajPunktNiestandardowy(e.latlng);
+});
 
 function dodajPunktNiestandardowy(latlng) {
     const customId = "custom_" + Date.now();
@@ -263,23 +276,27 @@ function dodajPunktNiestandardowy(latlng) {
     customMarkers[customId] = marker;
 
     punktyTrasy.push({ id: customId, dbId: null, nazwa: `Punkt (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`, lat: latlng.lat, lng: latlng.lng, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" });
+    renderujTrase();
 
-    if (!document.getElementById('route-panel').classList.contains('active')) otworzPlaner(); else renderujTrase();
-
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=14`, { headers: { 'Accept-Language': 'pl' } })
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=14&accept-language=pl`)
         .then(r => r.json())
         .then(data => {
             const punkt = punktyTrasy.find(p => p.id === customId);
             if (!punkt) return;
             const a = data.address || {};
             const nazwa = a.village || a.town || a.city || a.suburb || a.county || (data.display_name ? data.display_name.split(',')[0] : null);
-            if (nazwa) { punkt.nazwa = "📍 " + nazwa; renderujTrase(); }
+            if (!nazwa) return;
+            punkt.nazwa = "📍 " + nazwa;
+            // Podmieniamy tylko tekst — bez przebudowy kafelków i ponownego liczenia trasy
+            const el = Array.from(container.querySelectorAll('.route-tile')).find(t => t.getAttribute('data-id') === customId);
+            if (el) el.querySelector('.tile-name').textContent = punkt.nazwa;
+            aktualizujBoxLinku();
         }).catch(() => {});
 }
 
 // Wyszukiwarka
 function filtrujProjekty(zapytanie) {
-    const q = zapytanie.trim().toLowerCase();
+    const q = (zapytanie || "").trim().toLowerCase();
     projekty.forEach(p => {
         const pasuje = !q || p.nazwa.toLowerCase().includes(q) || p.etykieta.toLowerCase().includes(q) || p.typ.toLowerCase().includes(q);
         const marker = markerRefs[p.id];
@@ -328,10 +345,10 @@ function przelaczListe() {
     document.getElementById('btn-toggle-list').innerHTML = `Punkty (<span id="list-count">${punktyTrasy.length}</span>) ${rozwinieta ? '▼' : '▲'}`;
 }
 
+// Ten sam punkt można dodać wielokrotnie (np. Siedziba → ... → Siedziba)
 function dodajDoTrasyZId(id) {
     const prj = projekty.find(p => p.id === id);
     if (!prj) return;
-    if (punktyTrasy.some(p => p.dbId === id)) { if (markerRefs[id]) markerRefs[id].closeTooltip(); return; }
     punktyTrasy.push({ id: "prj_" + Date.now() + "_" + id, dbId: prj.id, nazwa: prj.nazwa, lat: prj.lat, lng: prj.lng, kierownik: prj.kierownik || "Brak", telKierownik: prj.telKierownik || "", bhp: prj.bhp || "Brak", telBhp: prj.telBhp || "", mail: prj.mail || "" });
     if (markerRefs[id]) markerRefs[id].closeTooltip();
     if (!document.getElementById('route-panel').classList.contains('active')) otworzPlaner(); else renderujTrase();
@@ -362,12 +379,12 @@ function renderujTrase() {
         if (index === punktyTrasy.length - 1 && punktyTrasy.length > 1) etykieta = "META";
 
         const pmHtml = punkt.telKierownik
-            ? `<a href="tel:${punkt.telKierownik}" class="tile-staff-contact">👤 <span class="staff-name">PM: ${punkt.kierownik}</span> <span>📞</span></a>`
-            : `<div class="tile-staff-contact">👤 <span class="staff-name">PM: ${punkt.kierownik}</span></div>`;
+            ? `<a href="tel:${esc(tel(punkt.telKierownik))}" class="tile-staff-contact">👤 <span class="staff-name">PM: ${esc(punkt.kierownik)}</span> <span>📞</span></a>`
+            : `<div class="tile-staff-contact">👤 <span class="staff-name">PM: ${esc(punkt.kierownik)}</span></div>`;
         const bhpHtml = punkt.telBhp
-            ? `<a href="tel:${punkt.telBhp}" class="tile-staff-contact">🛡️ <span class="staff-name">BHP: ${punkt.bhp}</span> <span>📞</span></a>`
-            : `<div class="tile-staff-contact">🛡️ <span class="staff-name">BHP: ${punkt.bhp}</span></div>`;
-        const mailHtml = punkt.mail ? `<a href="mailto:${punkt.mail}" class="tile-staff-contact">✉️ <span class="staff-name">${punkt.mail}</span></a>` : "";
+            ? `<a href="tel:${esc(tel(punkt.telBhp))}" class="tile-staff-contact">🛡️ <span class="staff-name">BHP: ${esc(punkt.bhp)}</span> <span>📞</span></a>`
+            : `<div class="tile-staff-contact">🛡️ <span class="staff-name">BHP: ${esc(punkt.bhp)}</span></div>`;
+        const mailHtml = punkt.mail ? `<a href="mailto:${esc(punkt.mail)}" class="tile-staff-contact">✉️ <span class="staff-name">${esc(punkt.mail)}</span></a>` : "";
         const brak = !punkt.telKierownik && !punkt.telBhp && !punkt.mail && (!punkt.kierownik || punkt.kierownik === "Brak") && (!punkt.bhp || punkt.bhp === "Brak");
         const staff = brak ? "" : `<div class="tile-staff-row">${pmHtml}${bhpHtml}</div>${mailHtml ? `<div class="tile-staff-row">${mailHtml}</div>` : ""}`;
 
@@ -377,7 +394,7 @@ function renderujTrase() {
         tile.innerHTML = `<div class="tile-main-row">
             <span class="tile-drag-handle">☰</span>
             <span class="tile-badge">${etykieta}</span>
-            <span class="tile-name">${punkt.nazwa}</span>
+            <span class="tile-name">${esc(punkt.nazwa)}</span>
             <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
         </div>${staff}`;
         container.appendChild(tile);
@@ -395,10 +412,12 @@ function aktualizujBoxLinku() {
         url = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
         opis = `Link do punktu: ${p.nazwa}`;
     } else {
-        const o = punktyTrasy[0], d = punktyTrasy[punktyTrasy.length - 1];
-        const wp = punktyTrasy.length > 2 ? punktyTrasy.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('|') : "";
+        const uzyte = punktyTrasy.slice(0, MAX_PUNKTOW_GOOGLE);
+        const o = uzyte[0], d = uzyte[uzyte.length - 1];
+        const wp = uzyte.length > 2 ? uzyte.slice(1, -1).map(p => `${p.lat},${p.lng}`).join('%7C') : "";
         url = `https://www.google.com/maps/dir/?api=1&origin=${o.lat},${o.lng}&destination=${d.lat},${d.lng}${wp ? '&waypoints=' + wp : ''}&travelmode=driving`;
-        opis = `Link do trasy (${punktyTrasy.length} pkt)`;
+        opis = `Link do trasy (${uzyte.length} pkt)`;
+        if (punktyTrasy.length > MAX_PUNKTOW_GOOGLE) opis += ` ⚠️ Google Maps obsługuje maks. ${MAX_PUNKTOW_GOOGLE} pkt — reszta pominięta w linku`;
     }
     document.getElementById('route-link-label').innerText = opis;
     document.getElementById('route-link-url').innerText = url;
@@ -408,6 +427,7 @@ function aktualizujBoxLinku() {
 }
 
 function przeliczTraseFetch() {
+    const seq = ++trasaSeq; // każda zmiana unieważnia starsze, jeszcze trwające zapytania
     const dt = document.getElementById('route-distance');
     aktualizujBoxLinku();
     if (punktyTrasy.length >= 2) {
@@ -416,6 +436,7 @@ function przeliczTraseFetch() {
         fetch(`https://router.project-osrm.org/route/v1/driving/${query}?overview=full&geometries=geojson`)
             .then(r => r.json())
             .then(data => {
+                if (seq !== trasaSeq) return;
                 if (data.code === 'Ok' && data.routes.length > 0) {
                     if (liniaTrasy) map.removeLayer(liniaTrasy);
                     const t = data.routes[0];
@@ -424,13 +445,16 @@ function przeliczTraseFetch() {
                     liniaTrasy = L.polyline(t.geometry.coordinates.map(c => [c[1], c[0]]), { color: '#222', weight: 5, opacity: 0.85 }).addTo(map);
                     const mobilny = document.body.classList.contains('mobile');
                     map.fitBounds(liniaTrasy.getBounds(), { paddingTopLeft: [30, mobilny ? 70 : 50], paddingBottomRight: [30, mobilny ? 200 : 50] });
-                } else dt.innerHTML = `⚠️ Brak dróg dojazdowych.`;
-            }).catch(() => dt.innerHTML = `⚠️ Błąd połączenia trasy.`);
+                } else {
+                    if (liniaTrasy) { map.removeLayer(liniaTrasy); liniaTrasy = null; }
+                    dt.innerHTML = `⚠️ Brak dróg dojazdowych.`;
+                }
+            }).catch(() => { if (seq === trasaSeq) dt.innerHTML = `⚠️ Błąd połączenia trasy.`; });
     } else if (punktyTrasy.length === 1) {
-        if (liniaTrasy) map.removeLayer(liniaTrasy);
+        if (liniaTrasy) { map.removeLayer(liniaTrasy); liniaTrasy = null; }
         dt.innerHTML = `Link do punktu gotowy — skopiuj powyżej`;
     } else {
-        if (liniaTrasy) map.removeLayer(liniaTrasy);
+        if (liniaTrasy) { map.removeLayer(liniaTrasy); liniaTrasy = null; }
         dt.innerHTML = `Kliknij punkt na mapie, by zacząć...`;
     }
 }
@@ -452,9 +476,10 @@ function kopiujFallback(text, cb) {
 }
 
 function zamknijIResetuj() {
+    trasaSeq++;
     Object.keys(customMarkers).forEach(id => { map.removeLayer(customMarkers[id]); delete customMarkers[id]; });
     punktyTrasy = [];
-    if (liniaTrasy) map.removeLayer(liniaTrasy);
+    if (liniaTrasy) { map.removeLayer(liniaTrasy); liniaTrasy = null; }
     document.getElementById('route-panel').classList.remove('active');
     document.body.classList.remove('panel-open', 'panel-expanded');
     document.getElementById('route-panel').classList.remove('expanded');
