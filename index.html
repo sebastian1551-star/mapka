@@ -86,6 +86,7 @@ body.panel-open:not(.mobile) #legend-panel{right:350px}
 .tooltip-row{font-size:12px;color:#444;margin-top:3px}
 .tooltip-row a{color:#111;font-weight:600}
 .tooltip-hint{font-size:10.5px;color:var(--dim);margin-top:6px;padding-top:5px;border-top:1px dashed var(--border)}
+.opis-box{background:#eef7ee;border:1px solid #cfe5cf;color:#2f5d34;border-radius:6px;padding:5px 8px;font-size:11.5px;line-height:1.35;margin-top:5px}
 .btn-toggle-list{display:none;background:#fff;border:1px solid #888;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer}
 body.mobile #search-box{font-size:16px;max-width:none}
 body.mobile #route-panel{top:auto;left:0;right:0;bottom:0;width:100%;max-width:none;transform:translateY(100%);border-left:none;border-top:1px solid var(--border);border-radius:14px 14px 0 0;box-shadow:0 -3px 14px rgba(0,0,0,.25);padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));max-height:70vh}
@@ -164,40 +165,41 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const tel = s => String(s || "").replace(/\s/g, "");
 const MAX_PUNKTOW_GOOGLE = 11; // origin + 9 waypoints + destination
 
+// Pole "opis" jest opcjonalne — np. opis: "Montaż konstrukcji słupów"
 const projekty = [
- { id: 1, typ: "LN", status: "nieaktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "", mail: "" },
- { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "J. Wójcikiewicz", telBhp: "798411926", mail: "" },
- { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "220042 CPK", lat: 52.209911, lng: 20.475766, kierownik: "Joanna Nowicka", telKierownik: "533350557", bhp: "Taras Kepych", telBhp: "533350549", mail: "" },
- { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "235926 Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099", mail: "" },
- { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "A. Wieczorek", telBhp: "518267094", mail: "" },
- { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "P. Trojanowski", telKierownik: "533350588", bhp: "-", telBhp: "", mail: "" },
- { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "250183 Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198", mail: "" },
- { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "250093 Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", telKierownik: "", bhp: "-", telBhp: "", mail: "" },
- { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "244855 Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198", mail: "" },
- { id: 10, typ: "LN", status: "aktywne", nazwa: "241133 LN Demon Munstenberg", etykieta: "251133 Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", telKierownik: "789123456", bhp: "Marek Woźniak", telBhp: "654321987", mail: "" },
- { id: 11, typ: "LN", status: "aktywne", nazwa: "250002 LN Trębaczew", etykieta: "250002 Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "K. Stokłosa", telKierownik: "533306946", bhp: "Jakub Gacek", telBhp: "503042697", mail: "" },
- { id: 12, typ: "", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "A. Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "", mail: "" },
- { id: 13, typ: "", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184", mail: "" },
- { id: 14, typ: "SE", status: "aktywne", nazwa: "211271 Baltic Power", etykieta: "211271 Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Daniel Riopka", telBhp: "", mail: "" },
- { id: 15, typ: "LK", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295", mail: "" },
- { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250562 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "Nadzór DE", telBhp: "+491624807448", mail: "" },
- { id: 17, typ: "UW", status: "nieaktywne", nazwa: "250251 UW Melsdorf", etykieta: "250251 Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 19, typ: "LN", status: "nieaktywne", nazwa: "LN Borken", etykieta: "260210 Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 20, typ: "LN", status: "nieaktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "A. Smoczyński", telBhp: "533350318", mail: "" },
- { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "" },
- { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Trzebinia", etykieta: "250415 Trzebinia", lat: 50.155272, lng: 19.463796, kierownik: "Vitali Aviaruk", telKierownik: "+48533306948", bhp: "-", telBhp: "", mail: "" },
- { id: 23, typ: "LN", status: "aktywne", nazwa: "LN Chełm", etykieta: "250147 Chełm", lat: 51.146126, lng: 23.502189, kierownik: "", telKierownik: "", bhp: "-", telBhp: "", mail: "" },
- { id: 24, typ: "SE", status: "aktywne", nazwa: "SE Żarnowiec 400kv", etykieta: "250671 Magazyn Żarnowiec", lat: 54.744423, lng: 18.095927, kierownik: "Bartłomiej Buczyński", telKierownik: "+48533350667", bhp: "-", telBhp: "", mail: "" },
- { id: 25, typ: "UW", status: "aktywne", nazwa: "250918 Mühlenbeck (Varsov)", etykieta: "250918 Mühlenbeck (Varsov)", lat: 53.542905, lng: 11.282758, kierownik: "Gabriel Grzonka", telKierownik: "", bhp: "Monika Sulka", telBhp: "+49 157 867 782 89", mail: "" },
- { id: 26, typ: "LE", status: "aktywne", nazwa: "400 KV Żydowo", etykieta: "260965 Dunowo-Żydowo", lat: 53.56384, lng: 16.34325, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
- { id: 27, typ: "LN", status: "aktywne", nazwa: "Pokój-Namysłów 110kv", etykieta: "250811 Pokój-Namysłów 110kv", lat: 50.918390, lng: 17.830409, kierownik: "Sebastian Kędra", telKierownik: "533350527", bhp: "", telBhp: "", mail: "" },
- { id: 28, typ: "SE", status: "aktywne", nazwa: "SE JEDLICZE", etykieta: "220919 SE JEDLICZE", lat: 49.711281, lng: 21.655624, kierownik: "Mateusz Podsiadło", telKierownik: "504561609", bhp: "", telBhp: "", mail: "" },
- { id: 29, typ: "SE", status: "aktywne", nazwa: "Magazyn GmbH Frankfurt", etykieta: "Magazyn GmbH Frankfurt", lat: 52.290917, lng: 14.478861, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
- { id: 30, typ: "SE", status: "aktywne", nazwa: "Słupsk Stacja", etykieta: "250380 Słupsk Stacja", lat: 54.501247, lng: 16.891565, kierownik: "Michał Matuszak", telKierownik: "+48 502 310 139", bhp: "", telBhp: "", mail: "" },
- { id: 31, typ: "LN", status: "aktywne", nazwa: "Wisłoka 400 kV roboty", etykieta: "250005 Wisłoka 400 kV", lat: 49.909623, lng: 21.347548, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" },
- { id: 32, typ: "LN", status: "aktywne", nazwa: "400 kv Choczewo-Grudziądz", etykieta: "250001 400kv Choczewo- Grudziądz", lat: 54.308967, lng: 18.273065, kierownik: "Taras Kepych", telKierownik: "533350549", bhp: "Arkadiusz Smoczyński", telBhp: "533350318", mail: "a.smoczynski@enprom.pl" },
- { id: 32, typ: "LN", status: "nieaktywne", nazwa: "UW Molau", etykieta: "250738 UW Molau", lat: 51.144815, lng: 11.843967, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "", telBhp: "", mail: "" }
+ { id: 1, typ: "LN", status: "nieaktywne", nazwa: "110 KV Bolesławiec - Świętoszów", etykieta: "244312 Bolesławiec", lat: 51.287194, lng: 15.594056, kierownik: "Filip Correia", telKierownik: "533350594", bhp: "brak", telBhp: "", mail: "", opis: "" },
+ { id: 2, typ: "SE", status: "aktywne", nazwa: "SE 400/110 kV Rokitnica", etykieta: "245165 Rokitnica", lat: 50.372361, lng: 18.771306, kierownik: "Michał Baliński", telKierownik: "509721633", bhp: "J. Wójcikiewicz", telBhp: "798411926", mail: "", opis: "" },
+ { id: 3, typ: "LN", status: "aktywne", nazwa: "Linia 110/220 kV CPK", etykieta: "220042 CPK", lat: 52.209911, lng: 20.475766, kierownik: "Joanna Nowicka", telKierownik: "533350557", bhp: "Taras Kepych", telBhp: "533350549", mail: "", opis: "" },
+ { id: 4, typ: "SE", status: "aktywne", nazwa: "235926 SE Leszno", etykieta: "235926 Leszno", lat: 51.877000, lng: 16.589056, kierownik: "Maciej Waszak", telKierownik: "533350576", bhp: "Rafał Rawecki", telBhp: "796999099", mail: "", opis: "" },
+ { id: 5, typ: "SE", status: "aktywne", nazwa: "244756 SE Polkowice", etykieta: "244756 Polkowice", lat: 51.496195, lng: 16.073803, kierownik: "Łukasz Turchan", telKierownik: "535750009", bhp: "A. Wieczorek", telBhp: "518267094", mail: "", opis: "" },
+ { id: 6, typ: "LN", status: "nieaktywne", nazwa: "250441 Linia 110 kV Radzyń - Łuków", etykieta: "250441 Radzyń", lat: 51.777073, lng: 22.622897, kierownik: "P. Trojanowski", telKierownik: "533350588", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 7, typ: "UW", status: "aktywne", nazwa: "UW Siebenbäumen (Siedenbrunzow)", etykieta: "250183 Siebenbrunzow", lat: 53.907861, lng: 13.144389, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198", mail: "", opis: "" },
+ { id: 8, typ: "UW", status: "nieaktywne", nazwa: "UW Semlin", etykieta: "250093 Semlin", lat: 53.147361, lng: 11.758278, kierownik: "-", telKierownik: "", bhp: "-", telBhp: "", mail: "", opis: "Uruchomiono stację" },
+ { id: 9, typ: "UW", status: "aktywne", nazwa: "UW Jesow", etykieta: "244855 Jesow", lat: 53.389861, lng: 11.016417, kierownik: "Nadzór Zagr.", telKierownik: "678912345", bhp: "Internat. Team", telBhp: "765432198", mail: "", opis: "" },
+ { id: 10, typ: "LN", status: "aktywne", nazwa: "241133 LN Demon Munstenberg", etykieta: "251133 Munstenberg", lat: 52.597977, lng: 13.623709, kierownik: "Paweł Zieliński", telKierownik: "789123456", bhp: "Marek Woźniak", telBhp: "654321987", mail: "", opis: "" },
+ { id: 11, typ: "LN", status: "aktywne", nazwa: "250002 LN Trębaczew", etykieta: "250002 Trębaczew", lat: 50.4571478, lng: 18.5353028, kierownik: "K. Stokłosa", telKierownik: "533306946", bhp: "Jakub Gacek", telBhp: "503042697", mail: "", opis: "" },
+ { id: 12, typ: "", status: "staly", nazwa: "Magazyn Centralny", etykieta: "Magazyn Centralny", lat: 51.9420371, lng: 20.6014463, kierownik: "A. Okrzeja", telKierownik: "533320297", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 13, typ: "", status: "staly", nazwa: "Siedziba", etykieta: "Siedziba", lat: 52.1402252, lng: 21.0153614, kierownik: "", telKierownik: "", bhp: "Szymon Wrona", telBhp: "533350184", mail: "", opis: "" },
+ { id: 14, typ: "SE", status: "aktywne", nazwa: "211271 Baltic Power", etykieta: "211271 Baltic Power", lat: 54.7717892, lng: 17.9058547, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Daniel Riopka", telBhp: "", mail: "", opis: "" },
+ { id: 15, typ: "LK", status: "aktywne", nazwa: "232751 Bałtyk II&III", etykieta: "232751 Bałtyk II&III", lat: 54.5432722, lng: 16.8494375, kierownik: "Tomasz Nyszk", telKierownik: "506651139", bhp: "Marta Pojasek", telBhp: "509239295", mail: "", opis: "" },
+ { id: 16, typ: "UW", status: "aktywne", nazwa: "UW Bensdorf", etykieta: "250562 Bensdorf", lat: 52.434160, lng: 12.332357, kierownik: "Rafał Wójcik", telKierownik: "", bhp: "Nadzór DE", telBhp: "+491624807448", mail: "", opis: "" },
+ { id: 17, typ: "UW", status: "nieaktywne", nazwa: "250251 UW Melsdorf", etykieta: "250251 Melsdorf", lat: 54.320276, lng: 10.041705, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 18, typ: "UW", status: "aktywne", nazwa: "UW Zernitz", etykieta: "242985 Zernitz", lat: 52.899719, lng: 12.404732, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 19, typ: "LN", status: "nieaktywne", nazwa: "LN Borken", etykieta: "260210 Borken", lat: 50.872711, lng: 8.744431, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 20, typ: "LN", status: "nieaktywne", nazwa: "LN 234011 Stade", etykieta: "234011 Stade", lat: 52.948083, lng: 9.311370, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "A. Smoczyński", telBhp: "533350318", mail: "", opis: "" },
+ { id: 21, typ: "LN", status: "nieaktywne", nazwa: "251134 Hamburg", etykieta: "251134 Hamburg", lat: 53.556833, lng: 10.154556, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 22, typ: "LN", status: "aktywne", nazwa: "LN Trzebinia", etykieta: "250415 Trzebinia", lat: 50.155272, lng: 19.463796, kierownik: "Vitali Aviaruk", telKierownik: "+48533306948", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 23, typ: "LN", status: "aktywne", nazwa: "LN Chełm", etykieta: "250147 Chełm", lat: 51.146126, lng: 23.502189, kierownik: "", telKierownik: "", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 24, typ: "SE", status: "aktywne", nazwa: "SE Żarnowiec 400kv", etykieta: "250671 Magazyn Żarnowiec", lat: 54.744423, lng: 18.095927, kierownik: "Bartłomiej Buczyński", telKierownik: "+48533350667", bhp: "-", telBhp: "", mail: "", opis: "" },
+ { id: 25, typ: "UW", status: "aktywne", nazwa: "250918 Mühlenbeck (Varsov)", etykieta: "250918 Mühlenbeck (Varsov)", lat: 53.542905, lng: 11.282758, kierownik: "Gabriel Grzonka", telKierownik: "", bhp: "Monika Sulka", telBhp: "+49 157 867 782 89", mail: "", opis: "" },
+ { id: 26, typ: "LE", status: "aktywne", nazwa: "400 KV Żydowo", etykieta: "260965 Dunowo-Żydowo", lat: 53.56384, lng: 16.34325, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 27, typ: "LN", status: "aktywne", nazwa: "Pokój-Namysłów 110kv", etykieta: "250811 Pokój-Namysłów 110kv", lat: 50.918390, lng: 17.830409, kierownik: "Sebastian Kędra", telKierownik: "533350527", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 28, typ: "SE", status: "aktywne", nazwa: "SE JEDLICZE", etykieta: "220919 SE JEDLICZE", lat: 49.711281, lng: 21.655624, kierownik: "Mateusz Podsiadło", telKierownik: "504561609", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 29, typ: "SE", status: "aktywne", nazwa: "Magazyn GmbH Frankfurt", etykieta: "Magazyn GmbH Frankfurt", lat: 52.290917, lng: 14.478861, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 30, typ: "SE", status: "aktywne", nazwa: "Słupsk Stacja", etykieta: "250380 Słupsk Stacja", lat: 54.501247, lng: 16.891565, kierownik: "Michał Matuszak", telKierownik: "+48 502 310 139", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 31, typ: "LN", status: "aktywne", nazwa: "Wisłoka 400 kV roboty", etykieta: "250005 Wisłoka 400 kV", lat: 49.909623, lng: 21.347548, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "", opis: "" },
+ { id: 32, typ: "LN", status: "aktywne", nazwa: "400 kv Choczewo-Grudziądz", etykieta: "250001 400kv Choczewo- Grudziądz", lat: 54.308967, lng: 18.273065, kierownik: "Taras Kepych", telKierownik: "533350549", bhp: "Arkadiusz Smoczyński", telBhp: "533350318", mail: "a.smoczynski@enprom.pl", opis: "" },
+ { id: 33, typ: "UW", status: "nieaktywne", nazwa: "UW Molau", etykieta: "250738 UW Molau", lat: 51.144815, lng: 11.843967, kierownik: "Rafał Wójcik", telKierownik: "+491624807448", bhp: "", telBhp: "", mail: "", opis: "Brak pozwolenia na budowę, będzie na dniach. Grudzień start prac" }
 ];
 
 function stworzIkone(p) {
@@ -228,8 +230,9 @@ function budujDymekHtml(p) {
     const pm = p.kierownik ? `<div class="tooltip-row">👤 <b>PM:</b> ${esc(p.kierownik)}${p.telKierownik ? ' · <a href="tel:' + esc(tel(p.telKierownik)) + '">' + esc(p.telKierownik) + '</a>' : ''}</div>` : "";
     const bhp = p.bhp ? `<div class="tooltip-row">🛡️ <b>BHP:</b> ${esc(p.bhp)}${p.telBhp ? ' · <a href="tel:' + esc(tel(p.telBhp)) + '">' + esc(p.telBhp) + '</a>' : ''}</div>` : "";
     const mail = p.mail ? `<div class="tooltip-row">✉️ <a href="mailto:${esc(p.mail)}">${esc(p.mail)}</a></div>` : "";
+    const opis = p.opis ? `<div class="opis-box">${esc(p.opis)}</div>` : "";
     const status = p.status === "nieaktywne" ? "nieaktywny" : (p.status === "staly" ? "punkt stały" : "aktywny");
-    return `<div class="tooltip-title">${esc(p.nazwa)}</div><span class="tooltip-status">${status}</span>${pm}${bhp}${mail}<div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
+    return `<div class="tooltip-title">${esc(p.nazwa)}</div><span class="tooltip-status">${status}</span>${opis}${pm}${bhp}${mail}<div class="tooltip-hint">dotknij pinezkę, aby dodać do trasy</div>`;
 }
 
 projekty.forEach(p => {
@@ -277,7 +280,7 @@ function dodajPunktNiestandardowy(latlng) {
     marker.bindTooltip("📍 Punkt niestandardowy", { direction: 'top', offset: [0, -10], className: 'custom-tooltip' });
     customMarkers[customId] = marker;
 
-    punktyTrasy.push({ id: customId, dbId: null, nazwa: `Punkt (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`, lat: latlng.lat, lng: latlng.lng, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" });
+    punktyTrasy.push({ id: customId, dbId: null, nazwa: `Punkt (${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`, lat: latlng.lat, lng: latlng.lng, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "", opis: "" });
     renderujTrase();
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=14&accept-language=pl`)
@@ -351,7 +354,7 @@ function przelaczListe() {
 function dodajDoTrasyZId(id) {
     const prj = projekty.find(p => p.id === id);
     if (!prj) return;
-    punktyTrasy.push({ id: "prj_" + Date.now() + "_" + id, dbId: prj.id, nazwa: prj.nazwa, lat: prj.lat, lng: prj.lng, kierownik: prj.kierownik || "Brak", telKierownik: prj.telKierownik || "", bhp: prj.bhp || "Brak", telBhp: prj.telBhp || "", mail: prj.mail || "" });
+    punktyTrasy.push({ id: "prj_" + Date.now() + "_" + id, dbId: prj.id, nazwa: prj.nazwa, lat: prj.lat, lng: prj.lng, kierownik: prj.kierownik || "Brak", telKierownik: prj.telKierownik || "", bhp: prj.bhp || "Brak", telBhp: prj.telBhp || "", mail: prj.mail || "", opis: prj.opis || "" });
     if (markerRefs[id]) markerRefs[id].closeTooltip();
     if (!document.getElementById('route-panel').classList.contains('active')) otworzPlaner(); else renderujTrase();
 }
@@ -389,6 +392,7 @@ function renderujTrase() {
         const mailHtml = punkt.mail ? `<a href="mailto:${esc(punkt.mail)}" class="tile-staff-contact">✉️ <span class="staff-name">${esc(punkt.mail)}</span></a>` : "";
         const brak = !punkt.telKierownik && !punkt.telBhp && !punkt.mail && (!punkt.kierownik || punkt.kierownik === "Brak") && (!punkt.bhp || punkt.bhp === "Brak");
         const staff = brak ? "" : `<div class="tile-staff-row">${pmHtml}${bhpHtml}</div>${mailHtml ? `<div class="tile-staff-row">${mailHtml}</div>` : ""}`;
+        const opisHtml = punkt.opis ? `<div class="opis-box">${esc(punkt.opis)}</div>` : "";
 
         const tile = document.createElement('div');
         tile.className = "route-tile";
@@ -398,7 +402,7 @@ function renderujTrase() {
             <span class="tile-badge">${etykieta}</span>
             <span class="tile-name">${esc(punkt.nazwa)}</span>
             <button class="btn-tile-delete" onclick="usunPunkt(${index}); event.stopPropagation();">❌</button>
-        </div>${staff}`;
+        </div>${opisHtml}${staff}`;
         container.appendChild(tile);
     });
     aktualizujBadgeLiczby();
@@ -506,7 +510,7 @@ function dodajMojaLokalizacje() {
     if (!navigator.geolocation) { alert("Twoja przeglądarka nie wspiera geolokalizacji."); return; }
     navigator.geolocation.getCurrentPosition(pos => {
         if (punktyTrasy.some(p => p.dbId === "me")) return;
-        punktyTrasy.unshift({ id: "me_" + Date.now(), dbId: "me", nazwa: "Moja Lokalizacja", lat: pos.coords.latitude, lng: pos.coords.longitude, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "" });
+        punktyTrasy.unshift({ id: "me_" + Date.now(), dbId: "me", nazwa: "Moja Lokalizacja", lat: pos.coords.latitude, lng: pos.coords.longitude, kierownik: "", telKierownik: "", bhp: "", telBhp: "", mail: "", opis: "" });
         renderujTrase();
     }, () => alert("Nie można pobrać lokalizacji. Włącz GPS/Zezwól na lokalizację."));
 }
